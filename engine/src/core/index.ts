@@ -5,3 +5,5 @@ export * from "./matrix";
 export * from "./pca";
 export * from "./kmeans";
 export * from "./consensus";
+export * from "./reputation";
+export * from "./groups";
