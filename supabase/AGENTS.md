@@ -10,7 +10,7 @@
 - RLS attiva su ogni tabella, default deny; policy esplicite per ruolo.
 - Voti/sostegni/rating: solo via RPC `SECURITY DEFINER` con `set search_path = ''`, pseudo calcolato lato server (`private.pseudo`), controllo onboarding + status. Nessuna SELECT diretta sulle tabelle di voto.
 - Contenuti con autore esposti solo da viste `*_public` senza `author_id`.
-- Soglie solo da `platform_config`, mai numeri magici nell'SQL. Modifiche config solo via `set_config` (scrive `config_changelog`).
+- Soglie solo da `platform_config`, mai numeri magici nell'SQL. Modifiche config solo via `admin_set_config` (scrive `config_changelog`).
 - Nessun ref di progetto, URL o chiave nel repo.
 
 ## Test pgTAP

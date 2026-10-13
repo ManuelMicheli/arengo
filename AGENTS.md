@@ -83,6 +83,7 @@ Creare/cancellare risorse esterne (repo GitHub, progetti Supabase/Vercel/Upstash
 ## Trappole note
 - Cron GitHub Actions è UTC: le 03:00 Europe/Rome cambiano con l'ora legale → doppio cron + guardia oraria nello script.
 - Il segreto HMAC dei pseudo non è ruotabile senza migrare tutti i voti: backup fuori repo.
+- `ai:map` include i file non tracciati: prima di committare la mappa, niente file scratch non ignorati nel tree.
 
 ## Fatto vuol dire
 - [ ] criteri del task in `docs/PLAN.md` verificati con `/verify` (output reale)

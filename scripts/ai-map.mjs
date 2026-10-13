@@ -4,7 +4,7 @@
 // Uso: node scripts/ai-map.mjs [--check] [--quiet]
 import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync, statSync, writeFileSync } from "node:fs";
-import { dirname, join, relative } from "node:path";
+import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -131,4 +131,16 @@ function main() {
   if (!args.has("--quiet")) console.log(`${relative(ROOT, outPath)} ${current === map ? "invariata" : "rigenerata"}.`);
 }
 
-if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) main();
+// Avvio come CLI: confronto tra percorsi normalizzati (Windows: lettera di unità e separatori variano
+// tra `node scripts/...`, `D:\...` e `/d/...` passato da Git Bash).
+export function isEntrypoint(argv1, moduleUrl = import.meta.url, platform = process.platform) {
+  if (!argv1) return false;
+  const win = platform === "win32";
+  const norm = (p) => {
+    const s = (win ? p.replace(/^\/([a-zA-Z])\//, "$1:/") : p).replace(/\\/g, "/");
+    return win ? s.toLowerCase() : s;
+  };
+  return norm(resolve(norm(argv1))) === norm(fileURLToPath(moduleUrl));
+}
+
+if (isEntrypoint(process.argv[1])) main();

@@ -18,8 +18,6 @@
     ],
     "deny": [
       "Read(./pnpm-lock.yaml)",
-      "Read(./node_modules/**)",
-      "Read(./**/node_modules/**)",
       "Read(./.next/**)",
       "Read(./.turbo/**)",
       "Read(./coverage/**)",

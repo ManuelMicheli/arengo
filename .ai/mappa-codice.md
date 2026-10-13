@@ -13,7 +13,7 @@ _nessuna_
 ## File → export
 
 - engine/test/smoke.test.ts
-- scripts/ai-map.mjs: buildMap, extractExports, extractTables, listFiles, routeFromFile
+- scripts/ai-map.mjs: buildMap, extractExports, extractTables, isEntrypoint, listFiles, routeFromFile
 - scripts/ai-map.test.mjs
 - scripts/check-changed.mjs
 - src/app/layout.tsx: RootLayout, metadata
