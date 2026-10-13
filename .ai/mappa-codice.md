@@ -44,7 +44,7 @@ Generata da `pnpm ai:map`: non modificare a mano. Consultare solo con Grep.
 - engine/src/core/matrix.ts: VoteMatrix, buildCenteredMatrix, selectItems, selectParticipants
 - engine/src/core/pca.ts: project2D
 - engine/src/core/prng.ts: Rng, hashString, mulberry32, rngFromSeed, shuffle
-- engine/src/core/reputation.ts: CROSS_GROUP_CREDIT, SAME_GROUP_CREDIT, computeReputation
+- engine/src/core/reputation.ts: computeReputation
 - engine/src/core/types.ts: Classification, ClusterStat, EngineConfig, EngineInput, EngineOutput, GroupAgreement, InsufficientReason, ItemResult, JuryPanel, ReputationEvent, ReputationScore, Vote, VoteValue
 - engine/src/core/validate.ts: assertValidConfig, assertValidVotes
 - engine/test/consensus.test.ts

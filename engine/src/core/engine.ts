@@ -54,8 +54,8 @@ export function runEngine(input: EngineInput): EngineResult {
         silhouette: null,
         clusters: [],
         items: computeItemResults(input.votes, participantSet, items, none, 0, input.history, config),
-        jury_panels: [],
-        reputation: computeReputation(input.reputation_events, none, config),
+        jury_panels: formJuryPanels(none, 0, input.jury_eligible, config, rngFromSeed(`${input.seed}:jury`)),
+        reputation: computeReputation(input.reputation_events, none, participantSet, config),
       },
       groups: new OpinionGroups(none, 0),
     };
@@ -86,8 +86,8 @@ export function runEngine(input: EngineInput): EngineResult {
       silhouette: best.silhouette,
       clusters: sizes.map((size, g) => ({ label: groupLabel(g), size })),
       items: computeItemResults(input.votes, participantSet, items, groupOf, best.k, input.history, config),
-      jury_panels: formJuryPanels(groupOf, input.jury_eligible, config, rngFromSeed(`${input.seed}:jury`)),
-      reputation: computeReputation(input.reputation_events, groupOf, config),
+      jury_panels: formJuryPanels(groupOf, best.k, input.jury_eligible, config, rngFromSeed(`${input.seed}:jury`)),
+      reputation: computeReputation(input.reputation_events, groupOf, participantSet, config),
     },
     groups: new OpinionGroups(groupOf, best.k),
   };

@@ -78,7 +78,8 @@ describe("output serializzato: nessuna associazione pseudo → gruppo", () => {
     const out = result.output;
     expect(out.jury_panels.length).toBeGreaterThan(0);
     for (const p of out.jury_panels) {
-      expect(Object.keys(p).sort()).toEqual(["members", "panel_id"]);
+      expect(Object.keys(p).sort()).toEqual(["diversity", "members", "panel_id"]);
+      expect(typeof p.diversity).toBe("boolean");
       expect([...p.members]).toEqual([...p.members].sort());
     }
     for (const r of out.reputation) expect(Object.keys(r).sort()).toEqual(["pseudo", "score"]);

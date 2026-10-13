@@ -27,8 +27,8 @@ Il motore guarda come hanno votato le persone, le divide in gruppi d'opinione an
    - `maggioritario`: l'approvazione totale (d'accordo / voti, tra chi è nel calcolo) è almeno `majority_threshold`;
    - `nessun_consenso`: tutto il resto.
 7. **Stabilità.** Un item è `stable_ponte` se è `ponte` in questa run e nelle `bridging_stable_runs` − 1 run precedenti. Solo le proposte ponte stabili possono entrare nell'Agenda.
-8. **Panel di giuria.** Tra gli idonei a fare i giurati, il motore forma panel di `jury_size` persone, ciascuno con persone di almeno `jury_min_buckets` gruppi diversi. Si forma il massimo numero di panel possibile, senza ripetere persone. Il panel esce solo come "panel n → elenco di pseudo in ordine alfabetico": nessuna indicazione del gruppo. Chi è idoneo ma non è entrato nel calcolo (passo 1) non ha un gruppo e non entra nei panel. Se i gruppi trovati sono meno di `jury_min_buckets`, non si forma nessun panel.
-9. **Reputazione.** Ogni "utile" a un argomento e ogni "d'accordo" a un messaggio della Piazza dà credito all'autore: 1 se chi vota è di un gruppo diverso dall'autore, 0,25 se è dello stesso gruppo o se uno dei due non ha un gruppo, 0 se uno vota sé stesso. Il credito si dimezza ogni `reputation_half_life_days` giorni. La reputazione sblocca permessi (curatore, giurato), **mai** peso nel voto.
+8. **Panel di giuria.** Tra gli idonei a fare i giurati, il motore forma panel di `jury_size` persone, ciascuno con persone di almeno `jury_min_buckets` gruppi diversi; se la run ha trovato meno gruppi (k < `jury_min_buckets`), bastano persone di tutti i k gruppi, cioè min(`jury_min_buckets`, k). Si forma il massimo numero di panel possibile, senza ripetere persone. Chi è idoneo ma non è entrato nel calcolo (passo 1) non ha un gruppo e non entra nei panel. Se la run è `insufficient` (nessun gruppo), i panel sono estratti a caso tra tutti gli idonei e marcati `diversity: false`. Il panel esce solo come "panel n → diversity sì/no + elenco di pseudo in ordine alfabetico": nessuna indicazione del gruppo.
+9. **Reputazione.** Ogni "utile" a un argomento e ogni "d'accordo" a un messaggio della Piazza dà credito all'autore: `reputation_cross_credit` se chi vota è di un gruppo diverso dall'autore, `reputation_same_credit` se è dello stesso gruppo o se l'autore (o l'intera run) non ha gruppi. Il credito è 0 se chi vota non è entrato nel calcolo (account più giovane di `min_account_age_days_for_engine` o con meno di `min_votes_participant` voti) o se vota sé stesso: così gli account nuovi creati in massa non spostano la reputazione di nessuno. Il credito si dimezza ogni `reputation_half_life_days` giorni. La reputazione sblocca permessi (curatore, giurato), **mai** peso nel voto.
 10. **Cosa esce.** Solo dati aggregati (vedi sotto). Il motore non scrive log su singole persone.
 
 Sorteggio dei curatori (usato da M8): tra gli idonei si estrae `curators_count` persone in modo stratificato, cioè ogni gruppo d'opinione riceve posti in proporzione alla sua dimensione (chi non ha gruppo forma uno strato a parte). Il seed è pubblico: sha256(data + id dell'ultima run), così chiunque può rifare il sorteggio.
@@ -51,14 +51,16 @@ Sorteggio dei curatori (usato da M8): tra gli idonei si estrae `curators_count` 
 | `jury_min_buckets` | 3 | gruppi diversi minimi in un panel |
 | `reputation_half_life_days` | 90 | giorni in cui il credito di reputazione si dimezza |
 | `curators_count` | 7 | curatori estratti nel sorteggio stratificato |
+| `reputation_cross_credit` | 1 | credito di reputazione da un gruppo diverso — **da aggiungere al seed in M6** |
+| `reputation_same_credit` | 0.25 | credito di reputazione dallo stesso gruppo — **da aggiungere al seed in M6** |
 
-Ogni modifica di un parametro passa da `admin_set_config` con motivazione obbligatoria ed è registrata in `config_changelog` (pubblico). I due crediti della reputazione (1 e 0,25) sono fissati dalla specifica e oggi stanno nel codice (`engine/src/core/reputation.ts`), non in `platform_config`.
+Ogni modifica di un parametro passa da `admin_set_config` con motivazione obbligatoria ed è registrata in `config_changelog` (pubblico).
 
 ## Cosa esce (e si può pubblicare)
 - Esito della run (`clustered` o `insufficient`, con il motivo), numero di persone e di item considerati, k scelto e silhouette.
 - Per ogni gruppo: solo l'etichetta ("Gruppo 1") e quante persone contiene.
 - Per ogni item: voti totali, d'accordo, contrari, passo, approvazione totale, p_agree di ogni gruppo, bridging score, classificazione, stabilità.
-- Panel di giuria: numero del panel → elenco di pseudo in ordine alfabetico.
+- Panel di giuria: numero del panel → `diversity` (sì se costruito sui gruppi della run, no se estratto a caso in una run senza gruppi) + elenco di pseudo in ordine alfabetico.
 - Reputazione: pseudo dell'autore → punteggio.
 
 ## Cosa NON si salva
@@ -75,4 +77,5 @@ Ogni modifica di un parametro passa da `admin_set_config` con motivazione obblig
 - **Il motore divide sempre in almeno `k_min` gruppi** se ci sono abbastanza persone, anche quando le opinioni non sono davvero divise. In quel caso molti item risultano `ponte` o `maggioritario`, il che è coerente: tutti approvano.
 - **Account falsi pazienti.** Il filtro sull'età dell'account e sui voti minimi ferma gli attacchi rapidi, non chi prepara account per settimane. Le difese restano la verifica del telefono (OTP + Turnstile), la stabilità su più run e il monitoraggio.
 - **Valori al confine.** I confronti con le soglie sono fatti in virgola mobile: un valore che "sulla carta" è esattamente uguale alla soglia può cadere di pochissimo sopra o sotto.
-- **Costo di calcolo.** La silhouette è calcolata confrontando ogni coppia di persone: va bene per migliaia di partecipanti; oltre, servirà un campionamento (da documentare qui quando introdotto).
+- **Costo di calcolo.** La silhouette è calcolata confrontando ogni coppia di persone (costo O(n²)): va bene fino a qualche migliaio di partecipanti. Oltre servirà calcolarla su un campione estratto con il seed della run, così il risultato resta riproducibile (da documentare qui quando introdotto).
+- **Giurie meno varie quando i gruppi sono pochi.** Con meno di `jury_min_buckets` gruppi la diversità si ferma ai gruppi esistenti; in una run senza gruppi i panel sono casuali (`diversity: false`).

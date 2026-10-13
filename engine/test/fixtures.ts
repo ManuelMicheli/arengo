@@ -17,4 +17,7 @@ export const SEED_CONFIG: EngineConfig = {
   jury_size: 5,
   jury_min_buckets: 3,
   reputation_half_life_days: 90,
+  // Non ancora nel seed: da aggiungere al seed in M6 (task 6.1).
+  reputation_cross_credit: 1,
+  reputation_same_credit: 0.25,
 };

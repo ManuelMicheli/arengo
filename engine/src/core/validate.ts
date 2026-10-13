@@ -34,6 +34,10 @@ export function assertValidConfig(config: EngineConfig): void {
     const v = config[key];
     if (!Number.isFinite(v) || v < 0 || v > 1) throw new Error(`platform_config: ${key} deve essere tra 0 e 1`);
   }
+  for (const key of ["reputation_cross_credit", "reputation_same_credit"] as const) {
+    const v = config[key];
+    if (!Number.isFinite(v) || v < 0) throw new Error(`platform_config: ${key} deve essere un numero ≥ 0`);
+  }
   if (!(config.reputation_half_life_days > 0)) {
     throw new Error("platform_config: reputation_half_life_days deve essere > 0");
   }

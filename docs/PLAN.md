@@ -117,7 +117,7 @@ Specifica: `engine/src/run.ts` con service role: legge voti (solo pseudo) e conf
 
 | # | Task | Possiede | Accettazione | Verifica | Dipende | Stato |
 |---|---|---|---|---|---|---|
-| 6.1 | Migrazioni output motore + RLS (lettura pubblica run/stats/item_consensus; nessun UPDATE/DELETE per admin) | `supabase/` | admin non modifica item_consensus | pgTAP | M5, E1 | todo |
+| 6.1 | Migrazioni output motore + RLS (lettura pubblica run/stats/item_consensus; nessun UPDATE/DELETE per admin); seed delle chiavi reputation_cross_credit e reputation_same_credit | `supabase/` | admin non modifica item_consensus | pgTAP | M5, E1 | todo |
 | 6.2 | `run.ts` I/O + scrittura output + panel + reputazione | `engine/src/` | run su seed DB di CI produce righe coerenti | job CI che esegue la run su DB locale | 6.1 | todo |
 | 6.3 | Workflow `engine.yml` | `.github/workflows/` | avvio manuale ok; nessun pseudo nei log | `gh run view --log` + grep | 6.2 | todo |
 | 6.4 | `docs/ALGORITMO.md` completo | `docs/` | coerente con il codice | lettura | 6.2 | todo |
@@ -197,9 +197,10 @@ Unico stream parallelo: **E1** (solo `engine/src/core/`, `engine/test/`, `docs/A
 | 2026-10-13 | E1: voti dei partecipanti contati su tutti gli item; idoneità degli item (`min_votes_item`) e approvazione totale (agree/voti, senza lisciatura) contano solo i partecipanti idonei | account nuovi in blocco non rendono "valido" un item né spostano i totali del motore | contare tutti i voti |
 | 2026-10-13 | E1: item `insufficiente` se anche un solo gruppo ha < `min_votes_per_cluster` voti; `stable_ponte` = ponte nella run corrente + nelle `bridging_stable_runs`-1 precedenti | bridging e divisività non misurabili senza tutti i gruppi | min sui soli gruppi con voti |
 | 2026-10-13 | E1: k-means++ singolo per k, stop quando le assegnazioni non cambiano o l'inerzia non scende (nessun max-iter); silhouette a parità → k minore; PCA `center:false` (matrice già centrata), componenti mancanti = 0; esito `insufficient` anche per `no_items`/`no_structure` | determinismo senza costanti arbitrarie | restart multipli, max-iter fisso |
-| 2026-10-13 | E1: `runEngine` → `{output, groups}`; `OpinionGroups` tiene pseudo→gruppo in campo `#private` (JSON = `{k}`) ed espone solo `drawStratified`, `juryPanels`, `reputation`; seed separati `<seed>:kmeans` e `<seed>:jury` | gruppi solo in memoria ma usabili da M6/M8 nella stessa run | restituire la mappa |
-| 2026-10-13 | E1: panel giuria disgiunti, il massimo possibile; idonei senza gruppo esclusi; nessun panel se k < `jury_min_buckets`. Sorteggio stratificato: resti più grandi, chi non ha gruppo = strato a parte | diversità garantita solo sui gruppi della run | panel con membri senza gruppo |
-| 2026-10-13 | E1: crediti reputazione 1 / 0,25 come costanti nel codice (1 solo se autore e votante hanno gruppi noti e diversi; 0 a sé stessi) | non sono nel seed: portarli in `platform_config` richiede una migrazione fuori da E1 | nuove chiavi config |
+| 2026-10-13 | E1: `runEngine` → `{output, groups}`; `OpinionGroups` tiene pseudo→gruppo in campo `#private` (JSON = `{k}`) ed espone solo `drawStratified`, `juryPanels` (la reputazione si calcola in `runEngine`); seed separati `<seed>:kmeans` e `<seed>:jury` | gruppi solo in memoria ma usabili da M6/M8 nella stessa run | restituire la mappa |
+| 2026-10-13 | E1: panel giuria disgiunti, il massimo possibile, da min(`jury_min_buckets`, k) gruppi distinti; idonei senza gruppo esclusi; run `insufficient` → panel casuali tra gli idonei con `diversity: false` per panel (M6 deve salvarlo). Sorteggio stratificato: resti più grandi, chi non ha gruppo = strato a parte | le giurie servono anche con pochi gruppi o nessuno; nessuna etichetta di gruppo comunque | nessun panel se k < `jury_min_buckets` |
+| 2026-10-13 | E1: crediti reputazione in config (`reputation_cross_credit`=1, `reputation_same_credit`=0.25), seed in M6 task 6.1; credito 0 se il votante non è partecipante idoneo (età/voti minimi) o è l'autore | principio 7 (niente soglie nel codice); account nuovi in blocco non spostano la reputazione | costanti nel codice; 0,25 agli account nuovi |
+| 2026-10-13 | Rischio E1: silhouette O(n²), oltre qualche migliaio di partecipanti la run rallenta → servirà silhouette su campione estratto con il seed della run (riproducibile) | costo di calcolo nel job notturno | silhouette completa sempre |
 
 ## Candidati Skill (creare dopo 2 esecuzioni manuali)
 | Candidato | Trigger | Input | Output | Esecuzioni manuali |

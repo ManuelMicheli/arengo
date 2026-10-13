@@ -1,25 +1,39 @@
 import { rngFromSeed, shuffle, type Rng } from "./prng";
-import { computeReputation } from "./reputation";
-import type { EngineConfig, JuryPanel, ReputationEvent, ReputationScore } from "./types";
+import type { EngineConfig, JuryPanel } from "./types";
 
 const byString = (a: string, b: string): number => (a < b ? -1 : a > b ? 1 : 0);
 const uniqueSorted = (xs: readonly string[]): string[] => [...new Set(xs)].sort(byString);
 
+/** Run senza gruppi: panel disgiunti estratti a caso tra gli idonei, diversity false. */
+function randomPanels(eligible: readonly string[], size: number, rng: Rng): JuryPanel[] {
+  const pool = shuffle(uniqueSorted(eligible), rng);
+  const panels: JuryPanel[] = [];
+  for (let start = 0; start + size <= pool.length; start += size) {
+    panels.push({ panel_id: panels.length + 1, diversity: false, members: pool.slice(start, start + size).sort(byString) });
+  }
+  return panels;
+}
+
 /**
- * Passo 8. Panel giuria disgiunti dagli idonei. Ogni panel: jury_size membri da almeno
- * jury_min_buckets gruppi diversi (un membro da ciascuno dei jury_min_buckets gruppi
- * più numerosi, poi i posti restanti dal gruppo con più idonei rimasti). Si formano
- * panel finché è possibile. Gli idonei senza gruppo (non partecipanti al calcolo) sono
- * esclusi. Output: solo panel_id e membri in ordine alfabetico, nessuna etichetta.
+ * Passo 8. Panel giuria disgiunti dagli idonei. Con k gruppi, ogni panel ha jury_size
+ * membri da almeno min(jury_min_buckets, k) gruppi diversi (un membro da ciascuno dei
+ * gruppi più numerosi, poi i posti restanti dal gruppo con più idonei rimasti); si
+ * formano panel finché è possibile e gli idonei senza gruppo sono esclusi. Con k = 0
+ * (run `insufficient`) i panel sono casuali e marcati diversity false.
+ * Output: solo panel_id, diversity e membri in ordine alfabetico, nessuna etichetta.
  */
 export function formJuryPanels(
   groupOf: ReadonlyMap<string, number>,
+  k: number,
   eligible: readonly string[],
   config: Pick<EngineConfig, "jury_size" | "jury_min_buckets">,
   rng: Rng,
 ): JuryPanel[] {
-  const { jury_size: size, jury_min_buckets: minBuckets } = config;
-  if (minBuckets > size || size < 1) return [];
+  const size = config.jury_size;
+  if (size < 1) return [];
+  if (k === 0) return randomPanels(eligible, size, rng);
+  const minBuckets = Math.min(config.jury_min_buckets, k);
+  if (minBuckets > size) return [];
   const byGroup = new Map<number, string[]>();
   for (const p of uniqueSorted(eligible)) {
     const g = groupOf.get(p);
@@ -49,7 +63,7 @@ export function formJuryPanels(
       const i = largestFirst()[0] as number;
       members.push((buckets[i] as string[]).pop() as string);
     }
-    panels.push({ panel_id: panels.length + 1, members: members.sort(byString) });
+    panels.push({ panel_id: panels.length + 1, diversity: true, members: members.sort(byString) });
   }
   return panels;
 }
@@ -99,7 +113,7 @@ export function stratifiedDraw(
  * Gruppi d'opinione di una run. Esistono solo in memoria: l'assegnazione
  * pseudo → gruppo è in un campo privato, non è enumerabile né serializzabile
  * (JSON.stringify restituisce solo k). Espone solo operazioni che producono
- * output senza etichetta di gruppo.
+ * output senza etichetta di gruppo. La reputazione si calcola dentro runEngine.
  */
 export class OpinionGroups {
   readonly #groupOf: ReadonlyMap<string, number>;
@@ -116,20 +130,12 @@ export class OpinionGroups {
     config: Pick<EngineConfig, "jury_size" | "jury_min_buckets">,
     seed: string,
   ): JuryPanel[] {
-    return formJuryPanels(this.#groupOf, eligible, config, rngFromSeed(seed));
+    return formJuryPanels(this.#groupOf, this.k, eligible, config, rngFromSeed(seed));
   }
 
   /** Sorteggio stratificato; `seedString` è il seed pubblico calcolato fuori dal core. */
   drawStratified(eligiblePseudos: readonly string[], seedString: string, count: number): string[] {
     return stratifiedDraw(this.#groupOf, eligiblePseudos, rngFromSeed(seedString), count);
-  }
-
-  /** Reputazione per autore (passo 9). */
-  reputation(
-    events: readonly ReputationEvent[],
-    config: Pick<EngineConfig, "reputation_half_life_days">,
-  ): ReputationScore[] {
-    return computeReputation(events, this.#groupOf, config);
   }
 
   toJSON(): { k: number } {

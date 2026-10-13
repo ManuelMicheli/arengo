@@ -29,6 +29,10 @@ export interface EngineConfig {
   readonly jury_size: number;
   readonly jury_min_buckets: number;
   readonly reputation_half_life_days: number;
+  /** Credito per un "utile"/"d'accordo" da un gruppo diverso. Da aggiungere al seed in M6. */
+  readonly reputation_cross_credit: number;
+  /** Credito dallo stesso gruppo (o con gruppo sconosciuto). Da aggiungere al seed in M6. */
+  readonly reputation_same_credit: number;
 }
 
 export type Classification = "ponte" | "divisivo" | "maggioritario" | "nessun_consenso" | "insufficiente";
@@ -88,6 +92,11 @@ export interface ClusterStat {
 
 export interface JuryPanel {
   readonly panel_id: number;
+  /**
+   * true: membri da min(jury_min_buckets, k) gruppi distinti della run.
+   * false: run senza gruppi (`insufficient`), panel estratto a caso tra gli idonei.
+   */
+  readonly diversity: boolean;
   /** Pseudo dei membri in ordine alfabetico: l'ordine non rivela il gruppo. */
   readonly members: readonly string[];
 }
