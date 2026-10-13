@@ -76,7 +76,10 @@ export interface EngineInput {
 
 export interface GroupAgreement {
   readonly group: string;
-  /** (agree+1)/(agree+disagree+pass+2), null se il gruppo ha meno di min_votes_per_cluster voti sull'item. */
+  /**
+   * (agree+1)/(agree+disagree+pass+2); null se il gruppo è sotto quota o ha meno di
+   * max(min_votes_per_cluster, min_votes_item) voti sull'item (celle piccole non pubblicate).
+   */
   readonly p_agree: number | null;
   /** true: gruppo sotto min_cluster_share, mostrato ma escluso dalla classificazione. */
   readonly below_share: boolean;
@@ -135,6 +138,11 @@ export interface PublicOutput {
   readonly items_considered: number;
   readonly k: number | null;
   readonly silhouette: number | null;
+  /**
+   * true se un solo gruppo è a quota (min_cluster_share): in questa run `ponte` e
+   * `divisivo` sono impossibili, gli item sono solo `maggioritario`/`nessun_consenso`.
+   */
+  readonly single_group_at_share: boolean;
   readonly clusters: readonly ClusterStat[];
   readonly items: readonly ItemResult[];
 }

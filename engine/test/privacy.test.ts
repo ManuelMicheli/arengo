@@ -102,7 +102,17 @@ describe("output serializzato: nessuna associazione pseudo → gruppo", () => {
   it("l'output è diviso in public (solo aggregati) e private (panel, reputazione)", () => {
     expect(Object.keys(result.output).sort()).toEqual(["private", "public"]);
     expect(Object.keys(result.output.public).sort()).toEqual(
-      ["clusters", "insufficient_reason", "items", "items_considered", "k", "outcome", "participants", "silhouette"].sort(),
+      [
+        "clusters",
+        "insufficient_reason",
+        "items",
+        "items_considered",
+        "k",
+        "outcome",
+        "participants",
+        "silhouette",
+        "single_group_at_share",
+      ].sort(),
     );
     expect(Object.keys(result.output.private).sort()).toEqual(["jury_panels", "reputation"]);
     for (const c of result.output.public.clusters) expect(Object.keys(c).sort()).toEqual(["below_share", "label", "size"]);

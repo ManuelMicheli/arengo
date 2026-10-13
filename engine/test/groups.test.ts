@@ -17,13 +17,15 @@ function makeGroups(sizes: number[]): Map<string, number> {
   return m;
 }
 
+const AT3 = [false, false, false];
+
 describe("formJuryPanels", () => {
   const groupOf = makeGroups([10, 7, 4]);
   const eligible = [...groupOf.keys()];
   const cfg = { jury_size: 5, jury_min_buckets: 3 };
 
   it("ogni panel ha jury_size membri da ≥ jury_min_buckets gruppi diversi, panel disgiunti", () => {
-    const panels = formJuryPanels(groupOf, 3, eligible, cfg, rngFromSeed("s"));
+    const panels = formJuryPanels(groupOf, AT3, eligible, cfg, rngFromSeed("s"));
     // Calcolo a mano (greedy): [10,7,4] → 4 panel, poi restano meno di 3 gruppi non vuoti.
     expect(panels).toHaveLength(4);
     const seen = new Set<string>();
@@ -39,7 +41,7 @@ describe("formJuryPanels", () => {
   });
 
   it("output senza etichetta di gruppo: solo panel_id, diversity e membri in ordine alfabetico", () => {
-    const panels = formJuryPanels(groupOf, 3, eligible, cfg, rngFromSeed("s"));
+    const panels = formJuryPanels(groupOf, AT3, eligible, cfg, rngFromSeed("s"));
     panels.forEach((p, i) => {
       expect(Object.keys(p).sort()).toEqual(["diversity", "members", "panel_id"]);
       expect(p.diversity).toBe(true);
@@ -50,7 +52,7 @@ describe("formJuryPanels", () => {
 
   it("k < jury_min_buckets (k = 2): panel con membri di min(jury_min_buckets, k) = 2 gruppi", () => {
     const two = makeGroups([20, 20]);
-    const panels = formJuryPanels(two, 2, [...two.keys()], cfg, rngFromSeed("s"));
+    const panels = formJuryPanels(two, [false, false], [...two.keys()], cfg, rngFromSeed("s"));
     expect(panels).toHaveLength(8);
     for (const p of panels) {
       expect(p.members).toHaveLength(cfg.jury_size);
@@ -61,7 +63,7 @@ describe("formJuryPanels", () => {
 
   it("nessun gruppo (run insufficient, k = 0): panel casuali tra gli idonei, diversity false", () => {
     const pool = Array.from({ length: 23 }, (_, i) => `idoneo-${String(i).padStart(2, "0")}`);
-    const panels = formJuryPanels(new Map(), 0, pool, cfg, rngFromSeed("s"));
+    const panels = formJuryPanels(new Map(), [], pool, cfg, rngFromSeed("s"));
     expect(panels).toHaveLength(4); // 23 idonei / 5 = 4 panel, 3 avanzano
     const seen = new Set<string>();
     panels.forEach((p, i) => {
@@ -75,18 +77,66 @@ describe("formJuryPanels", () => {
         seen.add(m);
       }
     });
-    expect(formJuryPanels(new Map(), 0, pool, cfg, rngFromSeed("s"))).toEqual(panels);
-    expect(formJuryPanels(new Map(), 0, pool, cfg, rngFromSeed("t"))).not.toEqual(panels);
+    expect(formJuryPanels(new Map(), [], pool, cfg, rngFromSeed("s"))).toEqual(panels);
+    expect(formJuryPanels(new Map(), [], pool, cfg, rngFromSeed("t"))).not.toEqual(panels);
   });
 
-  it("esclude gli idonei che non hanno un gruppo (non partecipanti al calcolo)", () => {
-    const panels = formJuryPanels(groupOf, 3, [...eligible, "senza-gruppo"], cfg, rngFromSeed("s"));
-    for (const p of panels) expect(p.members).not.toContain("senza-gruppo");
+  it("gli idonei senza gruppo possono completare un panel ma non contano per la diversità", () => {
+    const panels = formJuryPanels(groupOf, AT3, [...eligible, "senza-gruppo"], cfg, rngFromSeed("s"));
+    for (const p of panels) {
+      const groups = new Set(p.members.filter((m) => groupOf.has(m)).map((m) => groupOf.get(m)));
+      expect(groups.size).toBeGreaterThanOrEqual(cfg.jury_min_buckets);
+    }
+  });
+
+  it("k = 3 ma idonei in 2 soli gruppi → panel prodotti con ≥ 2 gruppi", () => {
+    const onlyTwo = eligible.filter((m) => groupOf.get(m) !== 2);
+    const panels = formJuryPanels(groupOf, AT3, onlyTwo, cfg, rngFromSeed("s"));
+    expect(panels.length).toBe(Math.floor(onlyTwo.length / cfg.jury_size));
+    for (const p of panels) {
+      expect(p.diversity).toBe(true);
+      expect(new Set(p.members.map((m) => groupOf.get(m))).size).toBeGreaterThanOrEqual(2);
+    }
+  });
+
+  it("giurati idonei in un solo gruppo (gli altri troppo giovani) → panel casuali, diversity false", () => {
+    const onlyOne = eligible.filter((m) => groupOf.get(m) === 0);
+    const panels = formJuryPanels(groupOf, AT3, onlyOne, cfg, rngFromSeed("s"));
+    expect(panels).toHaveLength(2);
+    for (const p of panels) expect(p.diversity).toBe(false);
+  });
+
+  it("i gruppi sotto quota completano i panel ma non contano come bucket", () => {
+    const g = makeGroups([10, 10, 3]);
+    const panels = formJuryPanels(g, [false, false, true], [...g.keys()], cfg, rngFromSeed("s"));
+    // bucket a quota = 2 → min(3, 2) = 2
+    expect(panels).toHaveLength(4);
+    for (const p of panels) {
+      expect(p.diversity).toBe(true);
+      const atShare = new Set(p.members.map((m) => g.get(m)).filter((x) => x !== 2));
+      expect(atShare.size).toBeGreaterThanOrEqual(2);
+    }
+  });
+
+  it("nessun bucket a quota con idonei → panel casuali tra tutti gli idonei", () => {
+    const g = makeGroups([10, 10, 6]);
+    const pool = [...[...g.keys()].filter((m) => g.get(m) === 2), "x1", "x2", "x3", "x4"];
+    const panels = formJuryPanels(g, [false, false, true], pool, cfg, rngFromSeed("s"));
+    expect(panels).toHaveLength(2);
+    for (const p of panels) expect(p.diversity).toBe(false);
+  });
+
+  it("mai zero panel con ≥ jury_size idonei: 2 bucket da 1 idoneo + 3 senza gruppo → 1 panel", () => {
+    const pool = ["g0-000", "g1-000", "x1", "x2", "x3"];
+    const panels = formJuryPanels(groupOf, AT3, pool, cfg, rngFromSeed("s"));
+    expect(panels).toHaveLength(1);
+    expect(panels[0]?.members).toEqual([...pool].sort());
+    expect(panels[0]?.diversity).toBe(true);
   });
 
   it("deterministico con lo stesso seed", () => {
-    expect(formJuryPanels(groupOf, 3, eligible, cfg, rngFromSeed("a"))).toEqual(
-      formJuryPanels(groupOf, 3, [...eligible].reverse(), cfg, rngFromSeed("a")),
+    expect(formJuryPanels(groupOf, AT3, eligible, cfg, rngFromSeed("a"))).toEqual(
+      formJuryPanels(groupOf, AT3, [...eligible].reverse(), cfg, rngFromSeed("a")),
     );
   });
 });
@@ -150,6 +200,7 @@ describe("computeReputation (valori calcolati a mano, half-life 90 giorni)", () 
         { author: "solo-brigata", rater: "non-idoneo", age_days: 0 }, // 0 → assente
       ],
       groupOf,
+      [false, false],
       participants,
       cfg,
     );
@@ -167,10 +218,31 @@ describe("computeReputation (valori calcolati a mano, half-life 90 giorni)", () 
         { author: "autA", rater: "r0", age_days: 0 },
       ],
       groupOf,
+      [false, false],
       participants,
       { ...cfg, reputation_cross_credit: 3, reputation_same_credit: 0.5 },
     );
     expect(rep).toEqual([{ pseudo: "autA", score: expect.closeTo(3.5, 10) }]);
+  });
+
+  it("un blocco sotto quota che dà \"utile\" a un complice gli dà al massimo il credito same", () => {
+    const g = new Map([...groupOf, ["blk1", 2], ["blk2", 2], ["blk3", 2]]);
+    const rep = computeReputation(
+      [
+        { author: "autA", rater: "blk1", age_days: 0 },
+        { author: "autA", rater: "blk2", age_days: 0 },
+        { author: "autA", rater: "blk3", age_days: 0 },
+        { author: "blk1", rater: "r1", age_days: 0 }, // autore sotto quota, votante a quota: same
+      ],
+      g,
+      [false, false, true],
+      new Set(g.keys()),
+      cfg,
+    );
+    expect(rep).toEqual([
+      { pseudo: "autA", score: expect.closeTo(3 * 0.25, 10) },
+      { pseudo: "blk1", score: expect.closeTo(0.25, 10) },
+    ]);
   });
 
   it("senza gruppi (run insufficient): votante idoneo → same_credit, non idoneo → 0", () => {
@@ -180,6 +252,7 @@ describe("computeReputation (valori calcolati a mano, half-life 90 giorni)", () 
         { author: "x", rater: "nuovo-account", age_days: 0 },
       ],
       new Map(),
+      [],
       new Set(["r0"]),
       cfg,
     );

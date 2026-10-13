@@ -15,35 +15,45 @@ function randomPanels(eligible: readonly string[], size: number, rng: Rng): Jury
 }
 
 /**
- * Passo 8. Panel giuria disgiunti dagli idonei. Con k gruppi, ogni panel ha jury_size
- * membri da almeno min(jury_min_buckets, k) gruppi diversi (un membro da ciascuno dei
- * gruppi più numerosi, poi i posti restanti dal gruppo con più idonei rimasti); si
- * formano panel finché è possibile e gli idonei senza gruppo sono esclusi. Con k = 0
- * (run `insufficient`) i panel sono casuali e marcati diversity false.
+ * Passo 8. Panel giuria disgiunti dagli idonei.
+ * - Bucket = gruppi a quota (belowShare[g] === false) con almeno un idoneo.
+ * - Con ≥ 2 bucket: ogni panel ha jury_size membri da almeno min(jury_min_buckets,
+ *   numero di bucket) bucket diversi (un membro da ciascuno dei bucket più numerosi, poi i
+ *   posti restanti dal bucket con più idonei rimasti); gli idonei dei gruppi sotto quota o
+ *   senza gruppo completano i panel ma non contano per la diversità. diversity: true.
+ * - Con 0 o 1 bucket (o run senza gruppi): panel casuali tra tutti gli idonei, diversity: false.
+ * - Mai zero panel se gli idonei sono almeno jury_size.
  * Output: solo panel_id, diversity e membri in ordine alfabetico, nessuna etichetta.
  */
 export function formJuryPanels(
   groupOf: ReadonlyMap<string, number>,
-  k: number,
+  belowShare: readonly boolean[],
   eligible: readonly string[],
   config: Pick<EngineConfig, "jury_size" | "jury_min_buckets">,
   rng: Rng,
 ): JuryPanel[] {
   const size = config.jury_size;
   if (size < 1) return [];
-  if (k === 0) return randomPanels(eligible, size, rng);
-  const minBuckets = Math.min(config.jury_min_buckets, k);
-  if (minBuckets > size) return [];
+  const pool = uniqueSorted(eligible);
+  if (belowShare.length === 0) return randomPanels(pool, size, rng);
+
   const byGroup = new Map<number, string[]>();
-  for (const p of uniqueSorted(eligible)) {
+  const fillerList: string[] = [];
+  for (const p of pool) {
     const g = groupOf.get(p);
-    if (g === undefined) continue;
+    if (g === undefined || belowShare[g] !== false) {
+      fillerList.push(p);
+      continue;
+    }
     const list = byGroup.get(g) ?? [];
     list.push(p);
     byGroup.set(g, list);
   }
   const groupIds = [...byGroup.keys()].sort((a, b) => a - b);
+  if (groupIds.length <= 1) return randomPanels(pool, size, rng);
   const buckets = groupIds.map((g) => shuffle(byGroup.get(g) as string[], rng));
+  const fillers = shuffle(fillerList, rng);
+  const minBuckets = Math.min(config.jury_min_buckets, buckets.length);
 
   const largestFirst = (): number[] =>
     buckets
@@ -55,16 +65,17 @@ export function formJuryPanels(
   const panels: JuryPanel[] = [];
   for (;;) {
     const order = largestFirst();
-    const remaining = buckets.reduce((s, b) => s + b.length, 0);
+    const remaining = buckets.reduce((s, b) => s + b.length, 0) + fillers.length;
     if (order.length < minBuckets || remaining < size) break;
     const members: string[] = [];
     for (const i of order.slice(0, minBuckets)) members.push((buckets[i] as string[]).pop() as string);
     while (members.length < size) {
-      const i = largestFirst()[0] as number;
-      members.push((buckets[i] as string[]).pop() as string);
+      const i = largestFirst()[0];
+      members.push((i === undefined ? fillers : (buckets[i] as string[])).pop() as string);
     }
     panels.push({ panel_id: panels.length + 1, diversity: true, members: members.sort(byString) });
   }
+  if (panels.length === 0 && pool.length >= size) return randomPanels(pool, size, rng);
   return panels;
 }
 

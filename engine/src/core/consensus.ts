@@ -11,15 +11,21 @@ export function pAgree(agree: number, disagree: number, pass: number): number {
 }
 
 /**
- * Passo 6. Classificazione da p_agree per gruppo (null = voti insufficienti nel gruppo)
- * e approvazione totale. Ordine: ponte → divisivo → maggioritario → nessun_consenso.
+ * Passo 6. Classificazione da p_agree dei gruppi a quota (null = voti insufficienti nel
+ * gruppo) e approvazione totale. Ordine: ponte → divisivo → maggioritario → nessun_consenso.
+ * Con meno di 2 gruppi a quota non esiste un "ponte" né un "divisivo": si classifica
+ * solo sull'approvazione totale e bridging_score è null.
  */
 export function classify(
   groupP: readonly (number | null)[],
   totalApproval: number,
   config: Pick<EngineConfig, "bridging_threshold" | "divisive_gap" | "majority_threshold">,
 ): { bridging_score: number | null; classification: Classification } {
-  if (groupP.length === 0 || groupP.some((p) => p === null)) {
+  if (groupP.length < 2) {
+    const classification = totalApproval >= config.majority_threshold ? "maggioritario" : "nessun_consenso";
+    return { bridging_score: null, classification };
+  }
+  if (groupP.some((p) => p === null)) {
     return { bridging_score: null, classification: "insufficiente" };
   }
   const ps = groupP as number[];
@@ -85,7 +91,12 @@ export function computeItemResults(
   history: Readonly<Record<string, readonly RunClassification[]>>,
   config: Pick<
     EngineConfig,
-    "min_votes_per_cluster" | "bridging_threshold" | "divisive_gap" | "majority_threshold" | "bridging_stable_runs"
+    | "min_votes_per_cluster"
+    | "min_votes_item"
+    | "bridging_threshold"
+    | "divisive_gap"
+    | "majority_threshold"
+    | "bridging_stable_runs"
   >,
 ): ItemResult[] {
   const k = belowShare.length;
@@ -109,9 +120,11 @@ export function computeItemResults(
     if (k === 0) {
       return { ...base, groups: [], bridging_score: null, classification: null, stable_ponte: false };
     }
-    const groupP = (perGroup[i] as Tally[]).map((g) => {
+    // Stessa soglia dei conteggi pubblici (M1): sotto, la cella non si calcola né si pubblica.
+    const minCell = Math.max(config.min_votes_per_cluster, config.min_votes_item);
+    const groupP = (perGroup[i] as Tally[]).map((g, gi) => {
       const gn = g.agree + g.disagree + g.pass;
-      return gn >= config.min_votes_per_cluster ? pAgree(g.agree, g.disagree, g.pass) : null;
+      return belowShare[gi] !== true && gn >= minCell ? pAgree(g.agree, g.disagree, g.pass) : null;
     });
     const groups: GroupAgreement[] = groupP.map((p, g) => ({
       group: groupLabel(g),

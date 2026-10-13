@@ -148,14 +148,18 @@ describe("E1.4 — gruppi 150/50 a conteggi esatti (valori calcolati a mano)", (
   it("gruppo esattamente a quota (50 su 200 con min_cluster_share 0,25) conta; appena sopra la quota no", () => {
     const at = runEngine(inputFrom(data, { config: { ...SEED_CONFIG, min_cluster_share: 0.25 } })).output.public;
     expect(at.clusters.map((c) => c.below_share)).toEqual([false, false]);
+    expect(at.single_group_at_share).toBe(false);
     expect(at.items.find((x) => x.item === "solo-gruppo-grande")?.classification).toBe("maggioritario");
+    expect(at.items.find((x) => x.item === "soglia-sopra")?.classification).toBe("ponte");
     const above = runEngine(inputFrom(data, { config: { ...SEED_CONFIG, min_cluster_share: 0.26 } })).output.public;
     expect(above.clusters.map((c) => c.below_share)).toEqual([false, true]);
-    // senza il gruppo piccolo resta solo il Gruppo 1: 121/152 ≥ 0,6 → ponte
+    // un solo gruppo a quota: niente ponte né divisivo, solo approvazione totale; flag pubblico
+    expect(above.single_group_at_share).toBe(true);
     const r = above.items.find((x) => x.item === "solo-gruppo-grande")!;
-    expect(r.groups[1]?.below_share).toBe(true);
-    expect(r.bridging_score).toBeCloseTo(121 / 152, 10);
-    expect(r.classification).toBe("ponte");
+    expect(r.groups[1]).toEqual({ group: "Gruppo 2", p_agree: null, below_share: true });
+    expect(r.bridging_score).toBeNull();
+    expect(r.classification).toBe("maggioritario"); // totale 0,71
+    for (const it of above.items) expect(["maggioritario", "nessun_consenso"]).toContain(it.classification);
   });
 
   it("nessun_consenso su dati sintetici", () => {
@@ -228,12 +232,42 @@ describe("E1.4 — brigading", () => {
       inputFrom(big, { votes: [...big.votes, ...old.votes], account_age_days: { ...big.ages, ...old.ages } }),
     ).output.public;
     expect(pub.participants).toBeGreaterThan(1000);
+    // comportamento osservato: il blocco (+1 su tutti i polarizzati) viene assorbito in uno dei
+    // due gruppi grandi (k = 2, nessun gruppo sotto quota) e lì è diluito
+    expect(pub.k).toBe(2);
+    expect(pub.single_group_at_share).toBe(false);
+    expect(pub.clusters.some((c) => c.below_share)).toBe(false);
     for (const b of big.bridges) {
       expect(pub.items.find((x) => x.item === b)?.classification, b).toBe("ponte");
     }
-    // se il blocco forma un gruppo proprio, è visibile ma marcato sotto quota
-    for (const c of pub.clusters) {
-      expect(c.below_share).toBe(c.size < SEED_CONFIG.min_cluster_share * pub.participants);
+    for (const p of big.polarized) {
+      expect(pub.items.find((x) => x.item === p)?.classification, p).toBe("divisivo");
+    }
+  });
+
+  it("opinioni oneste sfumate + blocco compatto lontano sotto il 5%: nessun ponte spurio", () => {
+    const honest = generatePolarized({ ...BASE_OPTIONS, seed: "sfumato", groupSizes: [300, 300], loyalty: 0.6 });
+    const block: Vote[] = [];
+    const blockAges: Record<string, number> = {};
+    for (let i = 0; i < 25; i++) {
+      const pseudo = `blocco-${i}`;
+      blockAges[pseudo] = 365;
+      for (const item of [...honest.polarized, ...honest.bridges]) block.push({ pseudo, item, value: -1 });
+    }
+    const pub = runEngine(
+      inputFrom(honest, { votes: [...honest.votes, ...block], account_age_days: { ...honest.ages, ...blockAges } }),
+    ).output.public;
+    expect(pub.participants).toBeGreaterThanOrEqual(620);
+    // il blocco lontano forma un terzo gruppo sotto quota (25 < 0,05 × partecipanti): visibile, non conta
+    expect(pub.k).toBe(3);
+    expect(pub.single_group_at_share).toBe(false);
+    expect(pub.clusters.filter((c) => c.below_share).map((c) => c.size)).toEqual([25]);
+    for (const b of honest.bridges) expect(pub.items.find((x) => x.item === b)?.classification, b).toBe("ponte");
+    for (const p of honest.polarized) expect(pub.items.find((x) => x.item === p)?.classification, p).toBe("divisivo");
+    const ponti = pub.items.filter((x) => x.classification === "ponte").map((x) => x.item);
+    for (const p of ponti) expect(honest.bridges).toContain(p);
+    for (const p of honest.polarized) {
+      expect(pub.items.find((x) => x.item === p)?.classification, p).not.toBe("ponte");
     }
   });
 
@@ -300,8 +334,8 @@ describe("E1.4 — determinismo", () => {
     for (const p of output.private.jury_panels) {
       expect(p.members).toHaveLength(SEED_CONFIG.jury_size);
       expect(p.diversity).toBe(true);
-      const groups = new Set(p.members.map((m) => partition.get(m)));
-      expect(groups.has(undefined)).toBe(false);
+      // gli idonei senza gruppo possono completare il panel ma non contano per la diversità
+      const groups = new Set(p.members.filter((m) => partition.has(m)).map((m) => partition.get(m)));
       expect(groups.size).toBeGreaterThanOrEqual(Math.min(SEED_CONFIG.jury_min_buckets, k));
     }
   });

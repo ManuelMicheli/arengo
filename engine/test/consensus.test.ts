@@ -36,6 +36,11 @@ describe("classify", () => {
   it("insufficiente se un gruppo non ha abbastanza voti", () => {
     expect(classify([0.9, null], 0.9, cfg)).toEqual({ bridging_score: null, classification: "insufficiente" });
   });
+  it("con un solo gruppo a quota niente ponte né divisivo: solo approvazione totale", () => {
+    expect(classify([0.9], 0.7, cfg)).toEqual({ bridging_score: null, classification: "maggioritario" });
+    expect(classify([0.9], 0.5, cfg)).toEqual({ bridging_score: null, classification: "nessun_consenso" });
+    expect(classify([null], 0.7, cfg)).toEqual({ bridging_score: null, classification: "maggioritario" });
+  });
 });
 
 describe("isStablePonte", () => {
@@ -79,7 +84,9 @@ describe("computeItemResults (valori calcolati a mano)", () => {
     v("zzz", "X", -1),
   ];
   const participants = new Set(groupOf.keys());
-  const results = computeItemResults(votes, participants, ["W", "X", "Y"], groupOf, [false, false], { X: ["ponte"] }, SEED_CONFIG);
+  // soglia per gruppo = max(min_votes_per_cluster, min_votes_item): qui 3, per i calcoli a mano su gruppi da 3
+  const cfg3 = { ...SEED_CONFIG, min_votes_item: 3 };
+  const results = computeItemResults(votes, participants, ["W", "X", "Y"], groupOf, [false, false], { X: ["ponte"] }, cfg3);
   const byItem = new Map(results.map((r) => [r.item, r]));
 
   it("X è ponte, stabile perché era ponte anche nella run precedente", () => {
@@ -115,27 +122,48 @@ describe("computeItemResults (valori calcolati a mano)", () => {
   });
 
   it("senza gruppi (k = 0): solo approvazioni totali, nessuna classificazione", () => {
-    const r = computeItemResults(votes, participants, ["X"], new Map(), [], {}, SEED_CONFIG);
+    const r = computeItemResults(votes, participants, ["X"], new Map(), [], {}, cfg3);
     expect(r[0]?.groups).toEqual([]);
     expect(r[0]?.classification).toBeNull();
     expect(r[0]?.bridging_score).toBeNull();
     expect(r[0]?.total_approval).toBeCloseTo(5 / 6);
   });
 
-  it("un gruppo sotto quota resta visibile ma non conta nel bridging, nel divisivo né in 'insufficiente'", () => {
-    // Gruppo 2 sotto quota: Y (g1 0,8; g2 0,2) diventa ponte sul solo Gruppo 1.
-    const r = computeItemResults(votes, participants, ["W", "Y"], groupOf, [false, true], {}, SEED_CONFIG);
+  it("celle piccole: p_agree pubblico solo con ≥ max(min_votes_per_cluster, min_votes_item) voti del gruppo", () => {
+    // con il seed la soglia è max(3, 5) = 5: gruppi da 3 voti → p_agree null → insufficiente
+    const x = computeItemResults(votes, participants, ["X"], groupOf, [false, false], {}, SEED_CONFIG)[0]!;
+    expect(x.groups.map((g) => g.p_agree)).toEqual([null, null]);
+    expect(x.bridging_score).toBeNull();
+    expect(x.classification).toBe("insufficiente");
+  });
+
+  it("un solo gruppo a quota: niente ponte né divisivo, p_agree del gruppo sotto quota null", () => {
+    // Gruppo 2 sotto quota: Y (totale 3/6 = 0,5) → nessun_consenso, non ponte sul solo Gruppo 1.
+    const r = computeItemResults(votes, participants, ["W", "Y"], groupOf, [false, true], {}, cfg3);
     const y = r.find((x) => x.item === "Y")!;
     expect(y.groups).toEqual([
       { group: "Gruppo 1", p_agree: 0.8, below_share: false },
-      { group: "Gruppo 2", p_agree: expect.closeTo(0.2, 10), below_share: true },
+      { group: "Gruppo 2", p_agree: null, below_share: true },
     ]);
-    expect(y.bridging_score).toBeCloseTo(0.8);
-    expect(y.classification).toBe("ponte");
-    // Gruppo 1 sotto quota: W (g1 con 2 voti) non è più insufficiente; g2 3 sì → 4/5 = 0,8 → ponte.
-    const w = computeItemResults(votes, participants, ["W"], groupOf, [true, false], {}, SEED_CONFIG)[0]!;
+    expect(y.bridging_score).toBeNull();
+    expect(y.classification).toBe("nessun_consenso");
+    // Gruppo 1 sotto quota: W (5 sì su 5) → maggioritario, non ponte.
+    const w = computeItemResults(votes, participants, ["W"], groupOf, [true, false], {}, cfg3)[0]!;
     expect(w.groups[0]).toEqual({ group: "Gruppo 1", p_agree: null, below_share: true });
-    expect(w.bridging_score).toBeCloseTo(0.8);
-    expect(w.classification).toBe("ponte");
+    expect(w.bridging_score).toBeNull();
+    expect(w.classification).toBe("maggioritario");
+  });
+
+  it("con ≥ 2 gruppi a quota il gruppo sotto quota non conta nel bridging", () => {
+    const g3 = new Map([...groupOf, ["g", 2], ["h", 2], ["i", 2]]);
+    const z = [
+      v("a", "Z", 1), v("b", "Z", 1), v("c", "Z", 1),
+      v("d", "Z", 1), v("e", "Z", 1), v("f", "Z", 1),
+      v("g", "Z", -1), v("h", "Z", -1), v("i", "Z", -1),
+    ];
+    const r = computeItemResults(z, new Set(g3.keys()), ["Z"], g3, [false, false, true], {}, cfg3)[0]!;
+    expect(r.groups.map((g) => g.p_agree)).toEqual([0.8, 0.8, null]);
+    expect(r.bridging_score).toBeCloseTo(0.8);
+    expect(r.classification).toBe("ponte");
   });
 });
