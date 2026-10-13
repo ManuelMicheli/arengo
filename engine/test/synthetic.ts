@@ -1,4 +1,4 @@
-import { hashString, rngFromSeed } from "../src/core/index";
+import { hashString, rngFromSeed, shuffle } from "../src/core/index";
 import type { Vote, VoteValue } from "../src/core/index";
 
 // Generatore deterministico di dati sintetici per i test del motore.
@@ -60,6 +60,47 @@ export function generatePolarized(o: SyntheticOptions): SyntheticData {
     }
   });
   return { votes, ages, truth, polarized, bridges };
+}
+
+/** Item con conteggi esatti per gruppo vero: [d'accordo, contrari, passo]. */
+export interface ExactItem {
+  readonly id: string;
+  readonly perGroup: readonly (readonly [number, number, number])[];
+}
+
+/**
+ * Generatore a conteggi esatti: per ogni item e gruppo, i primi `agree` membri (in un
+ * ordine mescolato dal seed, diverso per ogni item) votano +1, i successivi -1, poi 0;
+ * gli altri non votano. Permette di calcolare a mano p_agree e classificazioni.
+ */
+export function generateExact(seed: string, groupSizes: readonly number[], items: readonly ExactItem[], ageDays = 30): SyntheticData {
+  const rng = rngFromSeed(seed);
+  const truth = new Map<string, number>();
+  const ages: Record<string, number> = {};
+  const members: string[][] = [];
+  let n = 0;
+  groupSizes.forEach((size, g) => {
+    const list: string[] = [];
+    for (let u = 0; u < size; u++) {
+      const pseudo = `ex-${hashString(`${seed}:${n++}`).toString(16).padStart(8, "0")}`;
+      truth.set(pseudo, g);
+      ages[pseudo] = ageDays;
+      list.push(pseudo);
+    }
+    members.push(list);
+  });
+  const votes: Vote[] = [];
+  for (const item of items) {
+    item.perGroup.forEach(([agree, disagree, pass], g) => {
+      const order = shuffle(members[g] ?? [], rng);
+      order.forEach((pseudo, i) => {
+        if (i < agree) votes.push({ pseudo, item: item.id, value: 1 });
+        else if (i < agree + disagree) votes.push({ pseudo, item: item.id, value: -1 });
+        else if (i < agree + disagree + pass) votes.push({ pseudo, item: item.id, value: 0 });
+      });
+    });
+  }
+  return { votes, ages, truth, polarized: [], bridges: [] };
 }
 
 export const BASE_OPTIONS: SyntheticOptions = {

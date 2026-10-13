@@ -52,12 +52,24 @@ describe("output serializzato: nessuna associazione pseudo → gruppo", () => {
   it("gli pseudo compaiono solo nei membri dei panel e nella reputazione", () => {
     const paths = new Set(strings(output).filter(([, s]) => pseudos.has(s)).map(([p]) => p));
     expect(paths.size).toBeGreaterThan(0);
-    expect([...paths].sort()).toEqual(["$.jury_panels[*].members[*]", "$.reputation[*].pseudo"]);
+    expect([...paths].sort()).toEqual(["$.private.jury_panels[*].members[*]", "$.private.reputation[*].pseudo"]);
+  });
+
+  it("output.public serializzato non contiene nessuno pseudo dell'input", () => {
+    const json = JSON.stringify(result.output.public);
+    const all = new Set<string>([
+      ...input.votes.map((v) => v.pseudo),
+      ...Object.keys(input.account_age_days),
+      ...input.jury_eligible,
+      ...input.reputation_events.flatMap((e) => [e.author, e.rater]),
+    ]);
+    expect(all.size).toBeGreaterThan(200);
+    for (const p of all) expect(json.includes(p), p).toBe(false);
   });
 
   it("le etichette di gruppo compaiono solo negli aggregati (cluster e per item)", () => {
     const paths = new Set(strings(output).filter(([, s]) => /Gruppo/.test(s)).map(([p]) => p));
-    expect([...paths].sort()).toEqual(["$.clusters[*].label", "$.items[*].groups[*].group"]);
+    expect([...paths].sort()).toEqual(["$.public.clusters[*].label", "$.public.items[*].groups[*].group"]);
   });
 
   it("nessun oggetto contiene insieme uno pseudo e un'etichetta di gruppo", () => {
@@ -75,7 +87,7 @@ describe("output serializzato: nessuna associazione pseudo → gruppo", () => {
   });
 
   it("panel e reputazione hanno solo i campi previsti e sono in ordine alfabetico", () => {
-    const out = result.output;
+    const out = result.output.private;
     expect(out.jury_panels.length).toBeGreaterThan(0);
     for (const p of out.jury_panels) {
       expect(Object.keys(p).sort()).toEqual(["diversity", "members", "panel_id"]);
@@ -87,22 +99,13 @@ describe("output serializzato: nessuna associazione pseudo → gruppo", () => {
     expect(rep).toEqual([...rep].sort());
   });
 
-  it("l'output ha solo i campi aggregati previsti", () => {
-    expect(Object.keys(result.output).sort()).toEqual(
-      [
-        "clusters",
-        "insufficient_reason",
-        "items",
-        "items_considered",
-        "jury_panels",
-        "k",
-        "outcome",
-        "participants",
-        "reputation",
-        "silhouette",
-      ].sort(),
+  it("l'output è diviso in public (solo aggregati) e private (panel, reputazione)", () => {
+    expect(Object.keys(result.output).sort()).toEqual(["private", "public"]);
+    expect(Object.keys(result.output.public).sort()).toEqual(
+      ["clusters", "insufficient_reason", "items", "items_considered", "k", "outcome", "participants", "silhouette"].sort(),
     );
-    for (const c of result.output.clusters) expect(Object.keys(c).sort()).toEqual(["label", "size"]);
+    expect(Object.keys(result.output.private).sort()).toEqual(["jury_panels", "reputation"]);
+    for (const c of result.output.public.clusters) expect(Object.keys(c).sort()).toEqual(["label", "size"]);
   });
 
   it("anche serializzando l'intero risultato i gruppi in memoria non escono", () => {

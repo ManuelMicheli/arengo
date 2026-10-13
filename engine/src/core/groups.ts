@@ -112,8 +112,12 @@ export function stratifiedDraw(
 /**
  * Gruppi d'opinione di una run. Esistono solo in memoria: l'assegnazione
  * pseudo → gruppo è in un campo privato, non è enumerabile né serializzabile
- * (JSON.stringify restituisce solo k). Espone solo operazioni che producono
- * output senza etichetta di gruppo. La reputazione si calcola dentro runEngine.
+ * (JSON.stringify restituisce solo k). Panel giuria e reputazione sono già in
+ * `output.private`; qui resta solo il sorteggio stratificato (M8).
+ *
+ * ATTENZIONE: l'oggetto gruppi non deve mai uscire dalla run (né salvato, né
+ * passato ad altri processi, né esposto via API): interrogandolo ripetutamente con
+ * `drawStratified` su insiemi scelti si ricostruisce la partizione pseudo → gruppo.
  */
 export class OpinionGroups {
   readonly #groupOf: ReadonlyMap<string, number>;
@@ -124,16 +128,11 @@ export class OpinionGroups {
     this.k = k;
   }
 
-  /** Panel giuria (passo 8) con seed esplicito. */
-  juryPanels(
-    eligible: readonly string[],
-    config: Pick<EngineConfig, "jury_size" | "jury_min_buckets">,
-    seed: string,
-  ): JuryPanel[] {
-    return formJuryPanels(this.#groupOf, this.k, eligible, config, rngFromSeed(seed));
-  }
-
-  /** Sorteggio stratificato; `seedString` è il seed pubblico calcolato fuori dal core. */
+  /**
+   * Sorteggio stratificato dei curatori (M8), dentro la stessa run.
+   * `seedString` è il seed pubblico (sha256(data + id ultima run)) calcolato fuori dal core.
+   * Non chiamarlo su insiemi costruiti ad arte: vedi l'avvertenza sulla classe.
+   */
   drawStratified(eligiblePseudos: readonly string[], seedString: string, count: number): string[] {
     return stratifiedDraw(this.#groupOf, eligiblePseudos, rngFromSeed(seedString), count);
   }

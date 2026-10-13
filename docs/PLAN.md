@@ -118,7 +118,7 @@ Specifica: `engine/src/run.ts` con service role: legge voti (solo pseudo) e conf
 | # | Task | Possiede | Accettazione | Verifica | Dipende | Stato |
 |---|---|---|---|---|---|---|
 | 6.1 | Migrazioni output motore + RLS (lettura pubblica run/stats/item_consensus; nessun UPDATE/DELETE per admin); seed delle chiavi reputation_cross_credit e reputation_same_credit; `private.jury_panels` con colonna `diversity bool` | `supabase/` | admin non modifica item_consensus | pgTAP | M5, E1 | todo |
-| 6.2 | `run.ts` I/O + scrittura output + panel + reputazione | `engine/src/` | run su seed DB di CI produce righe coerenti | job CI che esegue la run su DB locale | 6.1 | todo |
+| 6.2 | `run.ts` I/O + scrittura output + panel + reputazione (solo `output.public` pubblicato/loggato; punteggio grezzo di reputazione mai mostrato agli utenti, solo soglie e percentili) | `engine/src/` | run su seed DB di CI produce righe coerenti | job CI che esegue la run su DB locale | 6.1 | todo |
 | 6.3 | Workflow `engine.yml` | `.github/workflows/` | avvio manuale ok; nessun pseudo nei log | `gh run view --log` + grep | 6.2 | todo |
 | 6.4 | `docs/ALGORITMO.md` completo | `docs/` | coerente con il codice | lettura | 6.2 | todo |
 
@@ -138,7 +138,7 @@ Specifica: candidatura opt-in. Idonei: account ≥ curator_min_account_days, rep
 | # | Task | Possiede | Accettazione | Verifica | Dipende | Stato |
 |---|---|---|---|---|---|---|
 | 8.1 | Tabelle candidature/mandati/azioni + RLS | `supabase/` | curatore non può nascondere una proposta | pgTAP | M7 | todo |
-| 8.2 | Sorteggio nel motore | `engine/src/` | non idoneo mai estratto; stesso seed → stessi estratti | Vitest | 8.1 | todo |
+| 8.2 | Sorteggio nel motore (idoneità per percentile di reputazione; punteggio grezzo mai mostrato agli utenti) | `engine/src/` | non idoneo mai estratto; stesso seed → stessi estratti | Vitest | 8.1 | todo |
 | 8.3 | UI permessi curatore + log pubblico | `src/app/curatori/` | merge solo con 2 approvazioni | pgTAP + Playwright | 8.1 | todo |
 
 ### M9 — Agenda, trasparenza, admin

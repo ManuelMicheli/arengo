@@ -38,6 +38,13 @@ export interface EngineConfig {
 export type Classification = "ponte" | "divisivo" | "maggioritario" | "nessun_consenso" | "insufficiente";
 
 /**
+ * Esito di un item in una run passata: la classificazione, oppure `assente` se l'item
+ * non era tra quelli considerati o la run era `insufficient` (classificazione null).
+ * Il chiamante deve registrare `assente`: così "consecutive" si rompe su quelle run.
+ */
+export type RunClassification = Classification | "assente";
+
+/**
  * Evento che genera reputazione: un "utile" a un argomento o un "d'accordo" a un
  * messaggio Piazza. `author` è lo pseudo dell'autore (calcolato fuori dal core),
  * `rater` lo pseudo di chi ha votato, `age_days` l'età del voto in giorni.
@@ -52,8 +59,8 @@ export interface EngineInput {
   readonly votes: readonly Vote[];
   /** pseudo → età dell'account in giorni. Pseudo assenti = non idonei al calcolo. */
   readonly account_age_days: Readonly<Record<string, number>>;
-  /** item → classificazioni delle run precedenti, dalla più vecchia alla più recente. */
-  readonly history: Readonly<Record<string, readonly Classification[]>>;
+  /** item → esiti delle run precedenti, dalla più vecchia alla più recente (una voce per run). */
+  readonly history: Readonly<Record<string, readonly RunClassification[]>>;
   /** pseudo idonei a fare i giurati (filtro di idoneità applicato fuori dal core). */
   readonly jury_eligible: readonly string[];
   readonly reputation_events: readonly ReputationEvent[];
@@ -108,8 +115,11 @@ export interface ReputationScore {
 
 export type InsufficientReason = "too_few_participants" | "no_items" | "no_structure";
 
-/** Output aggregato della run: è l'unica cosa che può essere salvata o pubblicata. */
-export interface EngineOutput {
+/**
+ * Parte pubblica dell'output: solo aggregati (statistiche della run, dei cluster e
+ * consenso per item). È l'UNICA parte che si può pubblicare o stampare nei log.
+ */
+export interface PublicOutput {
   readonly outcome: "clustered" | "insufficient";
   readonly insufficient_reason: InsufficientReason | null;
   readonly participants: number;
@@ -118,6 +128,18 @@ export interface EngineOutput {
   readonly silhouette: number | null;
   readonly clusters: readonly ClusterStat[];
   readonly items: readonly ItemResult[];
+}
+
+/**
+ * Parte privata: contiene pseudo. Va solo nelle tabelle dello schema `private`
+ * (service role); mai pubblicata, mai loggata.
+ */
+export interface PrivateOutput {
   readonly jury_panels: readonly JuryPanel[];
   readonly reputation: readonly ReputationScore[];
+}
+
+export interface EngineOutput {
+  readonly public: PublicOutput;
+  readonly private: PrivateOutput;
 }

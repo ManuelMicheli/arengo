@@ -1,4 +1,4 @@
-import type { Classification, EngineConfig, GroupAgreement, ItemResult, Vote } from "./types";
+import type { Classification, EngineConfig, GroupAgreement, ItemResult, RunClassification, Vote } from "./types";
 
 /** Etichetta anonima del gruppo d'opinione: "Gruppo 1" ... "Gruppo k". */
 export function groupLabel(index: number): string {
@@ -34,12 +34,13 @@ export function classify(
 }
 
 /**
- * Passo 7. Ponte stabile: ponte nella run corrente e nelle precedenti
- * (bridging_stable_runs - 1) run. `history` va dalla più vecchia alla più recente.
+ * Passo 7. Ponte stabile: ponte nella run corrente e nelle (bridging_stable_runs - 1)
+ * run immediatamente precedenti. `history` va dalla più vecchia alla più recente, una
+ * voce per run: `assente` o `insufficiente` rompono la serie.
  */
 export function isStablePonte(
   current: Classification | null,
-  history: readonly Classification[],
+  history: readonly RunClassification[],
   bridgingStableRuns: number,
 ): boolean {
   if (current !== "ponte") return false;
@@ -75,7 +76,7 @@ export function computeItemResults(
   items: readonly string[],
   groupOf: ReadonlyMap<string, number>,
   k: number,
-  history: Readonly<Record<string, readonly Classification[]>>,
+  history: Readonly<Record<string, readonly RunClassification[]>>,
   config: Pick<
     EngineConfig,
     "min_votes_per_cluster" | "bridging_threshold" | "divisive_gap" | "majority_threshold" | "bridging_stable_runs"

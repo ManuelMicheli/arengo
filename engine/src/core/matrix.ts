@@ -2,45 +2,57 @@ import type { EngineConfig, Vote } from "./types";
 
 const byString = (a: string, b: string): number => (a < b ? -1 : a > b ? 1 : 0);
 
-/**
- * Passo 1a. Partecipanti al calcolo: account con età ≥ min_account_age_days_for_engine
- * e almeno min_votes_participant voti (su qualunque item). Gli esclusi votano
- * comunque: sono solo fuori dal calcolo. Restituisce gli pseudo in ordine alfabetico.
- */
-export function selectParticipants(
-  votes: readonly Vote[],
-  accountAgeDays: Readonly<Record<string, number>>,
-  config: Pick<EngineConfig, "min_account_age_days_for_engine" | "min_votes_participant">,
-): string[] {
-  const counts = new Map<string, number>();
-  for (const v of votes) counts.set(v.pseudo, (counts.get(v.pseudo) ?? 0) + 1);
-  const out: string[] = [];
-  for (const [pseudo, n] of counts) {
-    const age = Object.hasOwn(accountAgeDays, pseudo) ? accountAgeDays[pseudo] : undefined;
-    if (age === undefined || !(age >= config.min_account_age_days_for_engine)) continue;
-    if (n < config.min_votes_participant) continue;
-    out.push(pseudo);
-  }
-  return out.sort(byString);
+export interface Eligible {
+  /** Pseudo dei partecipanti al calcolo, in ordine alfabetico. */
+  readonly participants: string[];
+  /** Item considerati, in ordine alfabetico. */
+  readonly items: string[];
 }
 
 /**
- * Passo 1b. Item considerati: almeno min_votes_item voti dei soli partecipanti idonei
- * (così account nuovi in blocco non rendono "valido" un item). Ordine alfabetico.
+ * Passo 1. Partecipanti e item considerati, filtrati a vicenda fino a stabilità:
+ * - partecipante: account con età ≥ min_account_age_days_for_engine e almeno
+ *   min_votes_participant voti sugli item considerati;
+ * - item considerato: almeno min_votes_item voti dei partecipanti.
+ * Si parte da tutti gli account abbastanza vecchi e da tutti gli item; ogni giro può
+ * solo togliere pseudo o item (insiemi decrescenti), quindi la stabilità arriva in al
+ * più (#pseudo + #item) giri: è il tetto strutturale del ciclo, non un parametro.
+ * Gli esclusi votano comunque: sono solo fuori dal calcolo.
  */
-export function selectItems(
+export function selectEligible(
   votes: readonly Vote[],
-  participants: ReadonlySet<string>,
-  config: Pick<EngineConfig, "min_votes_item">,
-): string[] {
-  const counts = new Map<string, number>();
-  for (const v of votes) {
-    if (!participants.has(v.pseudo)) continue;
-    counts.set(v.item, (counts.get(v.item) ?? 0) + 1);
+  accountAgeDays: Readonly<Record<string, number>>,
+  config: Pick<EngineConfig, "min_account_age_days_for_engine" | "min_votes_participant" | "min_votes_item">,
+): Eligible {
+  const oldEnough = (pseudo: string): boolean => {
+    const age = Object.hasOwn(accountAgeDays, pseudo) ? accountAgeDays[pseudo] : undefined;
+    return age !== undefined && age >= config.min_account_age_days_for_engine;
+  };
+  let participants = new Set(votes.map((v) => v.pseudo).filter(oldEnough));
+  let items = new Set(votes.map((v) => v.item));
+  const maxRounds = participants.size + items.size + 1;
+
+  for (let round = 0; round < maxRounds; round++) {
+    const itemCounts = new Map<string, number>();
+    for (const v of votes) {
+      if (participants.has(v.pseudo) && items.has(v.item)) itemCounts.set(v.item, (itemCounts.get(v.item) ?? 0) + 1);
+    }
+    const nextItems = new Set([...itemCounts].filter(([, n]) => n >= config.min_votes_item).map(([it]) => it));
+    const pseudoCounts = new Map<string, number>();
+    for (const v of votes) {
+      if (participants.has(v.pseudo) && nextItems.has(v.item)) {
+        pseudoCounts.set(v.pseudo, (pseudoCounts.get(v.pseudo) ?? 0) + 1);
+      }
+    }
+    const nextParticipants = new Set(
+      [...pseudoCounts].filter(([, n]) => n >= config.min_votes_participant).map(([p]) => p),
+    );
+    const stable = nextItems.size === items.size && nextParticipants.size === participants.size;
+    items = nextItems;
+    participants = nextParticipants;
+    if (stable) break;
   }
-  const out: string[] = [];
-  for (const [item, n] of counts) if (n >= config.min_votes_item) out.push(item);
-  return out.sort(byString);
+  return { participants: [...participants].sort(byString), items: [...items].sort(byString) };
 }
 
 export interface VoteMatrix {

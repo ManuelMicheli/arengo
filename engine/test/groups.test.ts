@@ -202,6 +202,11 @@ describe("OpinionGroups (gruppi solo in memoria)", () => {
     expect(Object.values(groups)).toEqual([3]);
   });
 
+  it("espone solo drawStratified (i panel giuria stanno in output.private)", () => {
+    const methods = Object.getOwnPropertyNames(OpinionGroups.prototype).filter((m) => m !== "constructor").sort();
+    expect(methods).toEqual(["drawStratified", "toJSON"]);
+  });
+
   it("drawStratified(eligible, seed, count) usa i gruppi in memoria", () => {
     const eligible = [...groupOf.keys()];
     expect(groups.drawStratified(eligible, "abc", 5)).toEqual(

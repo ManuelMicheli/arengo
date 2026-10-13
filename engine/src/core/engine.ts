@@ -1,17 +1,20 @@
 import { computeItemResults, groupLabel } from "./consensus";
 import { OpinionGroups, formJuryPanels } from "./groups";
 import { chooseK, type ChooseKResult } from "./kmeans";
-import { buildCenteredMatrix, selectItems, selectParticipants } from "./matrix";
+import { buildCenteredMatrix, selectEligible } from "./matrix";
 import { project2D } from "./pca";
 import { rngFromSeed } from "./prng";
 import { computeReputation } from "./reputation";
 import type { EngineInput, EngineOutput, InsufficientReason } from "./types";
-import { assertValidConfig, assertValidVotes } from "./validate";
+import { assertValidAccountAges, assertValidConfig, assertValidReputationEvents, assertValidVotes } from "./validate";
 
 export interface EngineResult {
-  /** Solo aggregati: è l'unica parte da salvare/pubblicare. */
+  /**
+   * `output.public`: solo aggregati, l'unica parte pubblicabile o loggabile.
+   * `output.private`: panel giuria e reputazione (contengono pseudo), solo tabelle `private`.
+   */
   readonly output: EngineOutput;
-  /** Gruppi della run, solo in memoria (per il sorteggio curatori). Mai da salvare. */
+  /** Gruppi della run, solo in memoria (sorteggio curatori). Mai fuori dalla run. */
   readonly groups: OpinionGroups;
 }
 
@@ -37,32 +40,38 @@ export function runEngine(input: EngineInput): EngineResult {
   const { config } = input;
   assertValidConfig(config);
   assertValidVotes(input.votes);
+  assertValidAccountAges(input.account_age_days);
+  assertValidReputationEvents(input.reputation_events);
 
-  const participants = selectParticipants(input.votes, input.account_age_days, config);
+  const { participants, items } = selectEligible(input.votes, input.account_age_days, config);
   const participantSet = new Set(participants);
-  const items = selectItems(input.votes, participantSet, config);
+  const jurySeed = `${input.seed}:jury`;
 
   const insufficient = (reason: InsufficientReason): EngineResult => {
     const none = new Map<string, number>();
     return {
       output: {
-        outcome: "insufficient",
-        insufficient_reason: reason,
-        participants: participants.length,
-        items_considered: items.length,
-        k: null,
-        silhouette: null,
-        clusters: [],
-        items: computeItemResults(input.votes, participantSet, items, none, 0, input.history, config),
-        jury_panels: formJuryPanels(none, 0, input.jury_eligible, config, rngFromSeed(`${input.seed}:jury`)),
-        reputation: computeReputation(input.reputation_events, none, participantSet, config),
+        public: {
+          outcome: "insufficient",
+          insufficient_reason: reason,
+          participants: participants.length,
+          items_considered: items.length,
+          k: null,
+          silhouette: null,
+          clusters: [],
+          items: computeItemResults(input.votes, participantSet, items, none, 0, input.history, config),
+        },
+        private: {
+          jury_panels: formJuryPanels(none, 0, input.jury_eligible, config, rngFromSeed(jurySeed)),
+          reputation: computeReputation(input.reputation_events, none, participantSet, config),
+        },
       },
       groups: new OpinionGroups(none, 0),
     };
   };
 
-  if (participants.length < config.min_participants_for_clustering) return insufficient("too_few_participants");
   if (items.length === 0) return insufficient("no_items");
+  if (participants.length < config.min_participants_for_clustering) return insufficient("too_few_participants");
 
   const { centered } = buildCenteredMatrix(input.votes, participants, items);
   const points = project2D(centered);
@@ -78,16 +87,20 @@ export function runEngine(input: EngineInput): EngineResult {
 
   return {
     output: {
-      outcome: "clustered",
-      insufficient_reason: null,
-      participants: participants.length,
-      items_considered: items.length,
-      k: best.k,
-      silhouette: best.silhouette,
-      clusters: sizes.map((size, g) => ({ label: groupLabel(g), size })),
-      items: computeItemResults(input.votes, participantSet, items, groupOf, best.k, input.history, config),
-      jury_panels: formJuryPanels(groupOf, best.k, input.jury_eligible, config, rngFromSeed(`${input.seed}:jury`)),
-      reputation: computeReputation(input.reputation_events, groupOf, participantSet, config),
+      public: {
+        outcome: "clustered",
+        insufficient_reason: null,
+        participants: participants.length,
+        items_considered: items.length,
+        k: best.k,
+        silhouette: best.silhouette,
+        clusters: sizes.map((size, g) => ({ label: groupLabel(g), size })),
+        items: computeItemResults(input.votes, participantSet, items, groupOf, best.k, input.history, config),
+      },
+      private: {
+        jury_panels: formJuryPanels(groupOf, best.k, input.jury_eligible, config, rngFromSeed(jurySeed)),
+        reputation: computeReputation(input.reputation_events, groupOf, participantSet, config),
+      },
     },
     groups: new OpinionGroups(groupOf, best.k),
   };

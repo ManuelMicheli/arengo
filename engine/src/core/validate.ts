@@ -1,4 +1,4 @@
-import type { EngineConfig, Vote } from "./types";
+import type { EngineConfig, ReputationEvent, Vote } from "./types";
 
 // Validazione dell'input. I messaggi d'errore citano chiavi di config, mai pseudo:
 // un errore può finire in un log.
@@ -48,9 +48,27 @@ export function assertValidConfig(config: EngineConfig): void {
   }
 }
 
+const isNonEmptyString = (x: unknown): x is string => typeof x === "string" && x.length > 0;
+const isValidAge = (x: unknown): x is number => typeof x === "number" && Number.isFinite(x) && x >= 0;
+
+export function assertValidAccountAges(ages: Readonly<Record<string, number>>): void {
+  for (const age of Object.values(ages)) {
+    if (!isValidAge(age)) throw new Error("account_age_days: età non valida (NaN, infinita o negativa) nell'input");
+  }
+}
+
+export function assertValidReputationEvents(events: readonly ReputationEvent[]): void {
+  for (const e of events) {
+    if (!isNonEmptyString(e.author) || !isNonEmptyString(e.rater) || !isValidAge(e.age_days)) {
+      throw new Error("reputation_events: evento non valido (author/rater vuoti o age_days NaN, infinito o negativo)");
+    }
+  }
+}
+
 export function assertValidVotes(votes: readonly Vote[]): void {
   const seen = new Set<string>();
   for (const v of votes) {
+    if (!isNonEmptyString(v.pseudo) || !isNonEmptyString(v.item)) throw new Error("voto con pseudo o item vuoto nell'input");
     if (v.value !== -1 && v.value !== 0 && v.value !== 1) throw new Error("voto con valore non valido nell'input");
     const key = JSON.stringify([v.pseudo, v.item]);
     if (seen.has(key)) throw new Error("voto duplicato (stesso pseudo e item) nell'input");

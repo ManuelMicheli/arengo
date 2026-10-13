@@ -48,6 +48,13 @@ describe("isStablePonte", () => {
     expect(isStablePonte("ponte", [], 1)).toBe(true);
     expect(isStablePonte(null, ["ponte"], 2)).toBe(false);
   });
+
+  it("consecutive: una run in cui l'item è assente o insufficiente rompe la serie", () => {
+    expect(isStablePonte("ponte", ["ponte", "assente"], 2)).toBe(false);
+    expect(isStablePonte("ponte", ["ponte", "insufficiente"], 2)).toBe(false);
+    expect(isStablePonte("ponte", ["ponte", "assente", "ponte", "ponte"], 3)).toBe(true);
+    expect(isStablePonte("ponte", ["ponte", "ponte", "assente", "ponte"], 3)).toBe(false);
+  });
 });
 
 describe("computeItemResults (valori calcolati a mano)", () => {

@@ -1,43 +1,46 @@
 import { describe, expect, it } from "vitest";
-import { buildCenteredMatrix, selectParticipants, selectItems } from "../src/core/index";
-import type { Vote } from "../src/core/index";
+import { buildCenteredMatrix, selectEligible } from "../src/core/index";
+import type { Vote, VoteValue } from "../src/core/index";
 import { SEED_CONFIG } from "./fixtures";
 
 const cfg = { ...SEED_CONFIG, min_votes_participant: 2, min_votes_item: 2, min_account_age_days_for_engine: 7 };
+const v = (pseudo: string, item: string, value: VoteValue = 1): Vote => ({ pseudo, item, value });
 
-describe("selectParticipants", () => {
+describe("selectEligible (filtro partecipanti ↔ item iterato)", () => {
   it("tiene solo account abbastanza vecchi e con abbastanza voti", () => {
-    const votes: Vote[] = [
-      { pseudo: "old", item: "i1", value: 1 },
-      { pseudo: "old", item: "i2", value: -1 },
-      { pseudo: "new", item: "i1", value: 1 },
-      { pseudo: "new", item: "i2", value: 1 },
-      { pseudo: "few", item: "i1", value: 1 },
-      { pseudo: "unknown", item: "i1", value: 1 },
-      { pseudo: "unknown", item: "i2", value: 1 },
-    ];
+    const votes = [v("old", "i1"), v("old", "i2", -1), v("new", "i1"), v("new", "i2"), v("few", "i1"), v("unknown", "i1"), v("unknown", "i2")];
     const ages = { old: 30, new: 3, few: 30 };
-    expect(selectParticipants(votes, ages, cfg)).toEqual(["old"]);
+    expect(selectEligible(votes, ages, { ...cfg, min_votes_item: 1 })).toEqual({ participants: ["old"], items: ["i1", "i2"] });
   });
 
   it("l'età uguale alla soglia è ammessa", () => {
-    const votes: Vote[] = [
-      { pseudo: "p", item: "i1", value: 1 },
-      { pseudo: "p", item: "i2", value: 1 },
-    ];
-    expect(selectParticipants(votes, { p: 7 }, cfg)).toEqual(["p"]);
+    const votes = [v("p", "i1"), v("p", "i2")];
+    expect(selectEligible(votes, { p: 7 }, { ...cfg, min_votes_item: 1 }).participants).toEqual(["p"]);
   });
-});
 
-describe("selectItems", () => {
-  it("conta solo i voti dei partecipanti idonei", () => {
-    const votes: Vote[] = [
-      { pseudo: "a", item: "i1", value: 1 },
-      { pseudo: "b", item: "i1", value: 1 },
-      { pseudo: "a", item: "i2", value: 1 },
-      { pseudo: "x", item: "i2", value: 1 },
+  it("gli item contano solo i voti dei partecipanti idonei", () => {
+    const votes = [v("a", "i1"), v("b", "i1"), v("a", "i2"), v("x", "i2")];
+    const res = selectEligible(votes, { a: 30, b: 30, x: 1 }, { ...cfg, min_votes_participant: 1 });
+    expect(res).toEqual({ participants: ["a", "b"], items: ["i1"] });
+  });
+
+  it("i voti del partecipante contano solo sugli item considerati, fino a stabilità (calcolo a mano, 4 giri)", () => {
+    // giro 1: e ha 1 voto → fuori; giro 2: i4 resta con 1 voto → fuori, d resta con 1 voto → fuori;
+    // giro 3: i3 resta con 1 voto → fuori, c resta con 1 voto → fuori; giro 4: stabile.
+    const votes = [
+      v("a", "i1"), v("a", "i2"),
+      v("b", "i1"), v("b", "i2"),
+      v("c", "i1"), v("c", "i3"),
+      v("d", "i3"), v("d", "i4"),
+      v("e", "i4"),
     ];
-    expect(selectItems(votes, new Set(["a", "b"]), cfg)).toEqual(["i1"]);
+    const ages = { a: 30, b: 30, c: 30, d: 30, e: 30 };
+    expect(selectEligible(votes, ages, cfg)).toEqual({ participants: ["a", "b"], items: ["i1", "i2"] });
+  });
+
+  it("nessun item considerato → nessun partecipante", () => {
+    const votes = [v("a", "i1"), v("a", "i2"), v("b", "i3"), v("b", "i4")];
+    expect(selectEligible(votes, { a: 30, b: 30 }, cfg)).toEqual({ participants: [], items: [] });
   });
 });
 
