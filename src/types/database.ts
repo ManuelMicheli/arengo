@@ -135,16 +135,30 @@ isOneToOne: false
                   Relationships: [
                     
                   ]
-                },"lexicon_terms": {
+                },"lexicon_changelog": {
                   Row: {
-                    "created_at": string,"id": string,"is_pattern": boolean,"level": number,"notes": string | null,"term": string
+                    "action": string,"changed_at": string,"changed_by": string | null,"id": number,"level": number,"reason": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "created_at"?: string,"id"?: string,"is_pattern"?: boolean,"level": number,"notes"?: string | null,"term": string
+                    "action": string,"changed_at"?: string,"changed_by"?: string | null,"id"?: never,"level": number,"reason": string
                   }
                   Update: {
-                    "created_at"?: string,"id"?: string,"is_pattern"?: boolean,"level"?: number,"notes"?: string | null,"term"?: string
+                    "action"?: string,"changed_at"?: string,"changed_by"?: string | null,"id"?: never,"level"?: number,"reason"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
+                },"lexicon_terms": {
+                  Row: {
+                    "created_at": string,"id": string,"level": number,"notes": string | null,"term": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"id"?: string,"level": number,"notes"?: string | null,"term": string
+                  }
+                  Update: {
+                    "created_at"?: string,"id"?: string,"level"?: number,"notes"?: string | null,"term"?: string
                   }
                   Relationships: [
                     
@@ -755,7 +769,13 @@ isOneToOne: false
                 }
           }
           Functions: {
-            "admin_set_config":
+            "admin_lexicon_delete":
+{ Args: { "reason": string,"term": string }; Returns: undefined
+                           },
+"admin_lexicon_upsert":
+{ Args: { "level": number,"reason": string,"term": string }; Returns: undefined
+                           },
+"admin_set_config":
 { Args: { "key": string,"reason": string,"value": Json }; Returns: undefined
                            },
 "cast_vote":
@@ -774,7 +794,7 @@ isOneToOne: false
 { Args: { "argument_id": string,"useful": boolean }; Returns: undefined
                            },
 "record_filter_block":
-{ Args: { "content_type": string,"level": number }; Returns: string
+{ Args: { "content_type": string,"level": number,"user_id": string }; Returns: string
                            },
 "support_problem":
 { Args: { "problem_id": string }; Returns: undefined
