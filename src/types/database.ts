@@ -500,7 +500,7 @@ isOneToOne: false
           Views: {
             "argument_utility": {
                   Row: {
-                    "argument_id": string | null,"not_useful": number | null,"total": number | null,"useful": number | null
+                    "argument_id": string | null,"below_threshold": boolean | null,"not_useful": number | null,"total": number | null,"useful": number | null
                   }
                   ComputedFields: never
                   Relationships: [
@@ -610,7 +610,7 @@ isOneToOne: false
                   ]
                 },"piazza_tallies": {
                   Row: {
-                    "agree": number | null,"disagree": number | null,"message_id": string | null,"pass": number | null,"total": number | null
+                    "agree": number | null,"below_threshold": boolean | null,"disagree": number | null,"message_id": string | null,"pass": number | null,"total": number | null
                   }
                   ComputedFields: never
                   Relationships: [
@@ -662,7 +662,7 @@ isOneToOne: false
                   ]
                 },"proposal_tallies": {
                   Row: {
-                    "agree": number | null,"disagree": number | null,"pass": number | null,"proposal_id": string | null,"total": number | null
+                    "agree": number | null,"below_threshold": boolean | null,"disagree": number | null,"pass": number | null,"proposal_id": string | null,"total": number | null
                   }
                   ComputedFields: never
                   Relationships: [
