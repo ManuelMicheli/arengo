@@ -7,3 +7,5 @@ export * from "./kmeans";
 export * from "./consensus";
 export * from "./reputation";
 export * from "./groups";
+export * from "./validate";
+export * from "./engine";

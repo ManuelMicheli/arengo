@@ -1,0 +1,55 @@
+import type { EngineConfig, Vote } from "./types";
+
+// Validazione dell'input. I messaggi d'errore citano chiavi di config, mai pseudo:
+// un errore può finire in un log.
+
+const INTEGER_KEYS = [
+  "min_account_age_days_for_engine",
+  "min_votes_participant",
+  "min_votes_item",
+  "min_votes_per_cluster",
+  "min_participants_for_clustering",
+  "k_min",
+  "k_max",
+  "bridging_stable_runs",
+  "jury_size",
+  "jury_min_buckets",
+] as const satisfies readonly (keyof EngineConfig)[];
+
+const PROBABILITY_KEYS = [
+  "bridging_threshold",
+  "divisive_gap",
+  "majority_threshold",
+] as const satisfies readonly (keyof EngineConfig)[];
+
+/** La silhouette richiede almeno 2 cluster. */
+const MIN_CLUSTERS = 2;
+
+export function assertValidConfig(config: EngineConfig): void {
+  for (const key of INTEGER_KEYS) {
+    const v = config[key];
+    if (!Number.isInteger(v) || v < 0) throw new Error(`platform_config: ${key} deve essere un intero ≥ 0`);
+  }
+  for (const key of PROBABILITY_KEYS) {
+    const v = config[key];
+    if (!Number.isFinite(v) || v < 0 || v > 1) throw new Error(`platform_config: ${key} deve essere tra 0 e 1`);
+  }
+  if (!(config.reputation_half_life_days > 0)) {
+    throw new Error("platform_config: reputation_half_life_days deve essere > 0");
+  }
+  if (config.k_min < MIN_CLUSTERS) throw new Error(`platform_config: k_min deve essere ≥ ${MIN_CLUSTERS}`);
+  if (config.k_min > config.k_max) throw new Error("platform_config: k_min deve essere ≤ k_max");
+  if (config.jury_min_buckets > config.jury_size) {
+    throw new Error("platform_config: jury_min_buckets deve essere ≤ jury_size");
+  }
+}
+
+export function assertValidVotes(votes: readonly Vote[]): void {
+  const seen = new Set<string>();
+  for (const v of votes) {
+    if (v.value !== -1 && v.value !== 0 && v.value !== 1) throw new Error("voto con valore non valido nell'input");
+    const key = JSON.stringify([v.pseudo, v.item]);
+    if (seen.has(key)) throw new Error("voto duplicato (stesso pseudo e item) nell'input");
+    seen.add(key);
+  }
+}
