@@ -20,4 +20,6 @@ export const SEED_CONFIG: EngineConfig = {
   // Non ancora nel seed: da aggiungere al seed in M6 (task 6.1).
   reputation_cross_credit: 1,
   reputation_same_credit: 0.25,
+  // Non ancora nel seed: da aggiungere al seed in M6 (task 6.1). Decisione di Manuel 2026-10-13.
+  min_cluster_share: 0.05,
 };

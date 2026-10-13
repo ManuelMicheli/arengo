@@ -105,7 +105,7 @@ describe("output serializzato: nessuna associazione pseudo → gruppo", () => {
       ["clusters", "insufficient_reason", "items", "items_considered", "k", "outcome", "participants", "silhouette"].sort(),
     );
     expect(Object.keys(result.output.private).sort()).toEqual(["jury_panels", "reputation"]);
-    for (const c of result.output.public.clusters) expect(Object.keys(c).sort()).toEqual(["label", "size"]);
+    for (const c of result.output.public.clusters) expect(Object.keys(c).sort()).toEqual(["below_share", "label", "size"]);
   });
 
   it("anche serializzando l'intero risultato i gruppi in memoria non escono", () => {

@@ -23,7 +23,7 @@ function seedFromMigrations(): Map<string, unknown> {
 }
 
 // Non ancora nel seed: le aggiunge la migrazione di M6 (task 6.1).
-const PENDING_M6 = new Set(["reputation_cross_credit", "reputation_same_credit"]);
+const PENDING_M6 = new Set(["reputation_cross_credit", "reputation_same_credit", "min_cluster_share"]);
 
 describe("SEED_CONFIG coincide con il seed di platform_config nelle migrazioni", () => {
   const seed = seedFromMigrations();

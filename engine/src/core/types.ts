@@ -33,6 +33,11 @@ export interface EngineConfig {
   readonly reputation_cross_credit: number;
   /** Credito dallo stesso gruppo (o con gruppo sconosciuto). Da aggiungere al seed in M6. */
   readonly reputation_same_credit: number;
+  /**
+   * Quota minima di un gruppo (frazione dei partecipanti, in [0, 0.5)) per contare in
+   * bridging, divisivo e "insufficiente". Da aggiungere al seed in M6. Decisione di Manuel.
+   */
+  readonly min_cluster_share: number;
 }
 
 export type Classification = "ponte" | "divisivo" | "maggioritario" | "nessun_consenso" | "insufficiente";
@@ -73,6 +78,8 @@ export interface GroupAgreement {
   readonly group: string;
   /** (agree+1)/(agree+disagree+pass+2), null se il gruppo ha meno di min_votes_per_cluster voti sull'item. */
   readonly p_agree: number | null;
+  /** true: gruppo sotto min_cluster_share, mostrato ma escluso dalla classificazione. */
+  readonly below_share: boolean;
 }
 
 export interface ItemResult {
@@ -95,6 +102,8 @@ export interface ClusterStat {
   /** "Gruppo 1" ... "Gruppo k": etichetta anonima, ricalcolata a ogni run. */
   readonly label: string;
   readonly size: number;
+  /** true se size < min_cluster_share × partecipanti. */
+  readonly below_share: boolean;
 }
 
 export interface JuryPanel {
@@ -113,7 +122,7 @@ export interface ReputationScore {
   readonly score: number;
 }
 
-export type InsufficientReason = "too_few_participants" | "no_items" | "no_structure";
+export type InsufficientReason = "too_few_participants" | "no_items" | "no_structure" | "all_groups_below_share";
 
 /**
  * Parte pubblica dell'output: solo aggregati (statistiche della run, dei cluster e

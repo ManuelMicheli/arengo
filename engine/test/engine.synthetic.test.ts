@@ -120,8 +120,8 @@ describe("E1.4 — gruppi 150/50 a conteggi esatti (valori calcolati a mano)", (
   it("i cluster coincidono con i gruppi veri (150 e 50)", () => {
     expect(pub.k).toBe(2);
     expect(pub.clusters).toEqual([
-      { label: "Gruppo 1", size: 150 },
-      { label: "Gruppo 2", size: 50 },
+      { label: "Gruppo 1", size: 150, below_share: false },
+      { label: "Gruppo 2", size: 50, below_share: false },
     ]);
   });
 
@@ -143,6 +143,19 @@ describe("E1.4 — gruppi 150/50 a conteggi esatti (valori calcolati a mano)", (
   it("vicino alla soglia di divisività: appena sopra → divisivo, appena sotto → maggioritario", () => {
     expect(item("divisivo-soglia").classification).toBe("divisivo");
     expect(item("divisivo-sotto").classification).toBe("maggioritario");
+  });
+
+  it("gruppo esattamente a quota (50 su 200 con min_cluster_share 0,25) conta; appena sopra la quota no", () => {
+    const at = runEngine(inputFrom(data, { config: { ...SEED_CONFIG, min_cluster_share: 0.25 } })).output.public;
+    expect(at.clusters.map((c) => c.below_share)).toEqual([false, false]);
+    expect(at.items.find((x) => x.item === "solo-gruppo-grande")?.classification).toBe("maggioritario");
+    const above = runEngine(inputFrom(data, { config: { ...SEED_CONFIG, min_cluster_share: 0.26 } })).output.public;
+    expect(above.clusters.map((c) => c.below_share)).toEqual([false, true]);
+    // senza il gruppo piccolo resta solo il Gruppo 1: 121/152 ≥ 0,6 → ponte
+    const r = above.items.find((x) => x.item === "solo-gruppo-grande")!;
+    expect(r.groups[1]?.below_share).toBe(true);
+    expect(r.bridging_score).toBeCloseTo(121 / 152, 10);
+    expect(r.classification).toBe("ponte");
   });
 
   it("nessun_consenso su dati sintetici", () => {
@@ -193,16 +206,34 @@ describe("E1.4 — brigading", () => {
     expect(attackedRep).toEqual(cleanRep);
   });
 
-  it("LIMITE DOCUMENTATO: 50 account appena sopra la soglia d'età formano un proprio gruppo e bloccano i ponte", () => {
+  it("VOLUTO: 50 account appena sopra l'età su 250 (20% ≥ min_cluster_share) sono una minoranza ampia e il loro veto conta", () => {
     const old = brigade(data, SEED_CONFIG.min_account_age_days_for_engine, "vecchi");
     const pub = runEngine(
       inputFrom(data, { votes: [...data.votes, ...old.votes], account_age_days: { ...data.ages, ...old.ages } }),
     ).output.public;
-    // Comportamento reale: il blocco entra nel calcolo, diventa un gruppo (k = 3) e, votando
-    // contro, porta il minimo tra i gruppi sotto bridging_threshold: i 5 trasversali non sono più ponte.
+    // Il blocco entra nel calcolo e diventa un gruppo (k = 3) a quota: votando contro porta il
+    // minimo sotto bridging_threshold. È il comportamento voluto: una minoranza ampia conta.
     expect(pub.k).toBe(3);
+    const small = pub.clusters.find((c) => c.size === 50);
+    expect(small?.below_share).toBe(false);
     for (const b of data.bridges) {
       expect(pub.items.find((x) => x.item === b)?.classification, b).toBe("divisivo");
+    }
+  });
+
+  it("50 account appena sopra l'età su 1000 utenti onesti (< min_cluster_share): i 5 trasversali restano ponte", () => {
+    const big = generatePolarized({ ...BASE_OPTIONS, seed: "grande", groupSizes: [500, 500] });
+    const old = brigade(big, SEED_CONFIG.min_account_age_days_for_engine, "vecchi");
+    const pub = runEngine(
+      inputFrom(big, { votes: [...big.votes, ...old.votes], account_age_days: { ...big.ages, ...old.ages } }),
+    ).output.public;
+    expect(pub.participants).toBeGreaterThan(1000);
+    for (const b of big.bridges) {
+      expect(pub.items.find((x) => x.item === b)?.classification, b).toBe("ponte");
+    }
+    // se il blocco forma un gruppo proprio, è visibile ma marcato sotto quota
+    for (const c of pub.clusters) {
+      expect(c.below_share).toBe(c.size < SEED_CONFIG.min_cluster_share * pub.participants);
     }
   });
 
@@ -273,6 +304,13 @@ describe("E1.4 — determinismo", () => {
       expect(groups.has(undefined)).toBe(false);
       expect(groups.size).toBeGreaterThanOrEqual(Math.min(SEED_CONFIG.jury_min_buckets, k));
     }
+  });
+
+  it("tutti i gruppi sotto quota (3 gruppi da ~1/3 con min_cluster_share 0,45) → insufficient", () => {
+    const pub = runEngine({ ...base, config: { ...SEED_CONFIG, min_cluster_share: 0.45 } }).output.public;
+    expect(pub.outcome).toBe("insufficient");
+    expect(pub.insufficient_reason).toBe("all_groups_below_share");
+    expect(pub.clusters).toEqual([]);
   });
 
   it("drawStratified sui gruppi della run è proporzionale ai gruppi veri", () => {
@@ -352,6 +390,13 @@ describe("validazione dell'input", () => {
   it("valore di voto non valido → errore", () => {
     const bad = { pseudo: "x", item: "y", value: 2 } as unknown as Vote;
     expect(() => runEngine({ ...base, votes: [...base.votes, bad] })).toThrow();
+  });
+
+  it("min_cluster_share fuori da [0, 0,5) → errore che cita la chiave", () => {
+    for (const v of [-0.1, 0.5, 0.7, Number.NaN]) {
+      expect(() => runEngine({ ...base, config: { ...SEED_CONFIG, min_cluster_share: v } })).toThrow(/min_cluster_share/);
+    }
+    expect(() => runEngine({ ...base, config: { ...SEED_CONFIG, min_cluster_share: 0 } })).not.toThrow();
   });
 
   it("config non valida (k_min > k_max) → errore che cita la chiave", () => {

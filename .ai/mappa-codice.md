@@ -36,7 +36,7 @@ Generata da `pnpm ai:map`: non modificare a mano. Consultare solo con Grep.
 
 ## File → export
 
-- engine/src/core/consensus.ts: classify, computeItemResults, groupLabel, isStablePonte, pAgree
+- engine/src/core/consensus.ts: belowShareFlags, classify, computeItemResults, groupLabel, isStablePonte, pAgree
 - engine/src/core/engine.ts: EngineResult, runEngine
 - engine/src/core/groups.ts: OpinionGroups, formJuryPanels, stratifiedDraw
 - engine/src/core/index.ts

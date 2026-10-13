@@ -64,10 +64,16 @@ function addVote(t: Tally, value: number): void {
   else t.pass++;
 }
 
+/** Passo 5: gruppi a quota (size ≥ min_cluster_share × partecipanti). */
+export function belowShareFlags(sizes: readonly number[], participants: number, minClusterShare: number): boolean[] {
+  return sizes.map((size) => size < minClusterShare * participants);
+}
+
 /**
  * Passi 5-7 per ogni item: conteggi dei soli partecipanti, p_agree per gruppo,
- * bridging_score, classificazione, stabilità. Con k = 0 (esito `insufficient`)
- * restituisce solo i conteggi e l'approvazione totale.
+ * bridging_score, classificazione, stabilità. `belowShare[g]` marca i gruppi sotto
+ * min_cluster_share: restano nell'output ma non entrano nella classificazione.
+ * Con zero gruppi (esito `insufficient`) restituisce solo i conteggi e l'approvazione totale.
  * `groupOf` è in memoria e non finisce nell'output: escono solo aggregati per gruppo.
  */
 export function computeItemResults(
@@ -75,13 +81,14 @@ export function computeItemResults(
   participants: ReadonlySet<string>,
   items: readonly string[],
   groupOf: ReadonlyMap<string, number>,
-  k: number,
+  belowShare: readonly boolean[],
   history: Readonly<Record<string, readonly RunClassification[]>>,
   config: Pick<
     EngineConfig,
     "min_votes_per_cluster" | "bridging_threshold" | "divisive_gap" | "majority_threshold" | "bridging_stable_runs"
   >,
 ): ItemResult[] {
+  const k = belowShare.length;
   const index = new Map(items.map((it, i) => [it, i]));
   const totals = items.map(emptyTally);
   const perGroup = items.map(() => Array.from({ length: k }, emptyTally));
@@ -106,8 +113,13 @@ export function computeItemResults(
       const gn = g.agree + g.disagree + g.pass;
       return gn >= config.min_votes_per_cluster ? pAgree(g.agree, g.disagree, g.pass) : null;
     });
-    const groups: GroupAgreement[] = groupP.map((p, g) => ({ group: groupLabel(g), p_agree: p }));
-    const { bridging_score, classification } = classify(groupP, totalApproval, config);
+    const groups: GroupAgreement[] = groupP.map((p, g) => ({
+      group: groupLabel(g),
+      p_agree: p,
+      below_share: belowShare[g] === true,
+    }));
+    const counted = groupP.filter((_, g) => belowShare[g] !== true);
+    const { bridging_score, classification } = classify(counted, totalApproval, config);
     const past = Object.hasOwn(history, item) ? (history[item] ?? []) : [];
     return {
       ...base,

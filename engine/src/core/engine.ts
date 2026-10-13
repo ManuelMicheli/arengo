@@ -1,4 +1,4 @@
-import { computeItemResults, groupLabel } from "./consensus";
+import { belowShareFlags, computeItemResults, groupLabel } from "./consensus";
 import { OpinionGroups, formJuryPanels } from "./groups";
 import { chooseK, type ChooseKResult } from "./kmeans";
 import { buildCenteredMatrix, selectEligible } from "./matrix";
@@ -59,7 +59,7 @@ export function runEngine(input: EngineInput): EngineResult {
           k: null,
           silhouette: null,
           clusters: [],
-          items: computeItemResults(input.votes, participantSet, items, none, 0, input.history, config),
+          items: computeItemResults(input.votes, participantSet, items, none, [], input.history, config),
         },
         private: {
           jury_panels: formJuryPanels(none, 0, input.jury_eligible, config, rngFromSeed(jurySeed)),
@@ -84,6 +84,9 @@ export function runEngine(input: EngineInput): EngineResult {
   participants.forEach((p, i) => groupOf.set(p, newIndex[best.assignments[i] as number] as number));
   const sizes = Array.from({ length: best.k }, () => 0);
   for (const g of groupOf.values()) sizes[g] = (sizes[g] as number) + 1;
+  // Quota minima sulla partizione finale (decisione di Manuel 2026-10-13).
+  const belowShare = belowShareFlags(sizes, participants.length, config.min_cluster_share);
+  if (belowShare.every(Boolean)) return insufficient("all_groups_below_share");
 
   return {
     output: {
@@ -94,8 +97,8 @@ export function runEngine(input: EngineInput): EngineResult {
         items_considered: items.length,
         k: best.k,
         silhouette: best.silhouette,
-        clusters: sizes.map((size, g) => ({ label: groupLabel(g), size })),
-        items: computeItemResults(input.votes, participantSet, items, groupOf, best.k, input.history, config),
+        clusters: sizes.map((size, g) => ({ label: groupLabel(g), size, below_share: belowShare[g] === true })),
+        items: computeItemResults(input.votes, participantSet, items, groupOf, belowShare, input.history, config),
       },
       private: {
         jury_panels: formJuryPanels(groupOf, best.k, input.jury_eligible, config, rngFromSeed(jurySeed)),

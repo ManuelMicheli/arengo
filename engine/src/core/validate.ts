@@ -38,6 +38,10 @@ export function assertValidConfig(config: EngineConfig): void {
     const v = config[key];
     if (!Number.isFinite(v) || v < 0) throw new Error(`platform_config: ${key} deve essere un numero ≥ 0`);
   }
+  const share = config.min_cluster_share;
+  if (!Number.isFinite(share) || share < 0 || share >= 0.5) {
+    throw new Error("platform_config: min_cluster_share deve essere in [0, 0.5)");
+  }
   if (!(config.reputation_half_life_days > 0)) {
     throw new Error("platform_config: reputation_half_life_days deve essere > 0");
   }
