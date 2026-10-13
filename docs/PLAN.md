@@ -181,6 +181,7 @@ Unico stream parallelo: **E1** (solo `engine/src/core/`, `engine/test/`, `docs/A
 | 2026-10-13 | Viste definer (`security_invoker = false`): `piazza_public`, `bar_public`, `*_tallies`, `argument_utility`; invoker: `problems_public`, `proposals_public`, `arguments_public` | aggregati su tabelle di voto illeggibili; handle senza profili pubblici | tutte invoker con policy su profiles/voti |
 | 2026-10-13 | `my_vote` copre anche `problem` (1 = sostenuto) e `argument` (1 utile / -1 non utile) | una sola RPC per "il mio voto" | RPC separate |
 | 2026-10-13 | Tipi DB generati nel job CI `db` (diff + artifact `database-types`) | niente Docker locale | tipi dal DB remoto arengo-dev |
+| 2026-10-13 | Migrazioni M1 applicate ad arengo-dev via MCP (ok di Manuel), versioni in `schema_migrations` allineate ai nomi file; `seed.sql` NON applicato in remoto | `db push` futuri non riapplicano; il segreto di test resta solo in CI | `db push` con CLI (richiede password DB) |
 | 2026-10-13 | `node_modules/**` leggibile dagli agenti (tolto dal deny) | il blocco Next in AGENTS.md rimanda ai doc in `node_modules/next/dist/docs/` | deny totale |
 
 ## Candidati Skill (creare dopo 2 esecuzioni manuali)
