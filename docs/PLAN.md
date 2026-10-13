@@ -40,11 +40,11 @@ Specifica:
 
 | # | Task | Possiede | Accettazione | Verifica | Dipende | Stato |
 |---|---|---|---|---|---|---|
-| 1.1 | Migrazioni schemi, tabelle, vincoli, indici (FK, (topic_id, created_at), status), RLS attiva ovunque default deny, grant: nessuno su `private` | `supabase/migrations/` | `supabase db reset` pulito in CI | job CI `db` | M0 | doing |
-| 1.2 | `private.pseudo` + RPC voto/sostegno/rating/my_vote con controlli onboarding/status | `supabase/migrations/` | voto doppio aggiorna invece di duplicare; utente non onboardato/sospeso → errore | pgTAP | 1.1 | doing |
-| 1.3 | Viste pubbliche e aggregati; `admin_set_config` + changelog; seed config | `supabase/migrations/`, `supabase/seed.sql` | viste senza author_id; config leggibile da anon | pgTAP | 1.1 | doing |
-| 1.4 | Test pgTAP: anon non legge voti; authenticated non legge voti altrui né `voter_pseudo`; admin non può UPDATE/DELETE voti; `private` non esposto; `author_id` non leggibile da anon/authenticated | `supabase/tests/` | tutti verdi | `supabase test db` in CI | 1.2, 1.3 | doing |
-| 1.5 | Tipi generati in `src/types/database.ts` (generatore Supabase in CI o `pnpm dlx supabase gen types` sul DB di CI) | `src/types/` | typecheck verde | `pnpm typecheck` | 1.1 | doing |
+| 1.1 | Migrazioni schemi, tabelle, vincoli, indici (FK, (topic_id, created_at), status), RLS attiva ovunque default deny, grant: nessuno su `private` | `supabase/migrations/` | `supabase db reset` pulito in CI | job CI `db` | M0 | verified |
+| 1.2 | `private.pseudo` + RPC voto/sostegno/rating/my_vote con controlli onboarding/status | `supabase/migrations/` | voto doppio aggiorna invece di duplicare; utente non onboardato/sospeso → errore | pgTAP | 1.1 | verified |
+| 1.3 | Viste pubbliche e aggregati; `admin_set_config` + changelog; seed config | `supabase/migrations/`, `supabase/seed.sql` | viste senza author_id; config leggibile da anon | pgTAP | 1.1 | verified |
+| 1.4 | Test pgTAP: anon non legge voti; authenticated non legge voti altrui né `voter_pseudo`; admin non può UPDATE/DELETE voti; `private` non esposto; `author_id` non leggibile da anon/authenticated | `supabase/tests/` | tutti verdi | `supabase test db` in CI | 1.2, 1.3 | verified |
+| 1.5 | Tipi generati in `src/types/database.ts` (generatore Supabase in CI o `pnpm dlx supabase gen types` sul DB di CI) | `src/types/` | typecheck verde | `pnpm typecheck` | 1.1 | verified |
 
 ### E1 — Motore core puro (stream parallelo, solo `engine/`)
 Dimostrazione: test sintetici verdi, output identico con stesso seed. Nessun accesso a DB, nessuna migrazione, non tocca `package.json` root né lockfile (dipendenze già installate in M0).
