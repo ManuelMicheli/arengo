@@ -30,7 +30,7 @@ Il dibattito politico online premia polarizzazione e engagement. Manca un luogo 
 - **Piazza**: discussione per tema/problema, thread a 2 livelli; messaggi votabili (d'accordo / contrario / passo) che alimentano il motore.
 - **Bar**: chiacchiere non votabili, fuori dal motore, autocancellate dopo `bar_retention_days`.
 - **Motore di consenso**: job notturno (PCA + k-means sulla matrice dei voti) che calcola l'approvazione per gruppo d'opinione.
-- **Proposta ponte**: approvazione minima tra tutti i gruppi ≥ `bridging_threshold`, stabile per `bridging_stable_runs` run consecutive.
+- **Proposta ponte**: approvazione minima tra i gruppi con almeno `min_cluster_share` dei partecipanti ≥ `bridging_threshold`, stabile per `bridging_stable_runs` run consecutive.
 - **Agenda**: documento versionato per tema: problemi, proposte ponte, migliori argomenti, disaccordi aperti.
 - **Curatore**: utente idoneo sorteggiato, mandato di `curator_term_months`; struttura, unisce doppioni, verifica fonti. NON può bloccare o nascondere contenuti.
 - **Giuria**: `jury_size` utenti (da panel pre-estratti) da almeno min(`jury_min_buckets`, k) gruppi diversi, dove k è il numero di gruppi trovati dalla run; decidono sulle segnalazioni di livello 2-3. Nelle run senza gruppi (dati insufficienti) la giuria è estratta a caso tra gli idonei e marcata "senza garanzia di diversità" nel registro pubblico.
