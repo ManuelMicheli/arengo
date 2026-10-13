@@ -1,7 +1,7 @@
 // Controllo pre-invio da usare nelle Server Action: pausa di scrittura → lessico → checkContent →
 // registrazione del blocco (solo livello e tipo, mai il testo). Nessun log, nessun testo negli errori.
 
-import { checkContent, type LexiconEntry, type RuleId, type SeverityLevel } from "./check-content";
+import { checkContent, type FilterParams, type LexiconEntry, type RuleId, type SeverityLevel } from "./check-content";
 
 export type ContentType =
   | "problem"
@@ -16,6 +16,8 @@ export type ContentType =
 
 export type ModerationDeps = {
   loadLexicon: () => Promise<readonly LexiconEntry[]>;
+  /** Parametri del filtro da platform_config. */
+  loadFilterParams: () => Promise<FilterParams>;
   /** Fine della pausa di scrittura dell'utente corrente, o null. */
   writingPausedUntil: () => Promise<Date | null>;
   /** Registra il blocco (statistiche + strike); restituisce la fine della pausa, o null. */
@@ -46,7 +48,8 @@ export async function guardContent(text: string, contentType: ContentType, deps:
   const pausedUntil = await deps.writingPausedUntil();
   if (pausedUntil) return { ok: false, reason: "paused", pausedUntil, message: pauseMessage(pausedUntil) };
 
-  const result = checkContent(text, { lexicon: await deps.loadLexicon() });
+  const [lexicon, params] = await Promise.all([deps.loadLexicon(), deps.loadFilterParams()]);
+  const result = checkContent(text, { lexicon, params });
   if (result.ok) return { ok: true };
 
   const newPause = await deps.recordBlock(result.level, contentType);

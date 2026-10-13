@@ -3,9 +3,10 @@ import type { LexiconEntry } from "./check-content";
 import { guardContent, RULE_MESSAGES, type ModerationDeps } from "./guard";
 
 const SECRET_TEXT = "sei un parolaccia1 testo-privato-da-non-salvare";
+const PARAMS = { targetWindowWords: 4, letterJoinMinRun: 3 };
 const LEXICON: LexiconEntry[] = [
-  { term: "parolaccia1", level: 2, isPattern: false },
-  { term: "odiotermine", level: 3, isPattern: false },
+  { term: "parolaccia1", level: 2 },
+  { term: "odiotermine", level: 3 },
 ];
 
 const CONSOLE_METHODS = ["log", "info", "warn", "error", "debug", "trace"] as const;
@@ -26,6 +27,7 @@ function makeDeps(overrides: Partial<ModerationDeps> = {}) {
   const calls: unknown[] = [];
   const deps: ModerationDeps = {
     loadLexicon: vi.fn(async () => LEXICON),
+    loadFilterParams: vi.fn(async () => PARAMS),
     writingPausedUntil: vi.fn(async () => null),
     recordBlock: vi.fn(async (...args: unknown[]) => {
       calls.push(args);

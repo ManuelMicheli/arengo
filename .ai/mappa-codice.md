@@ -17,6 +17,7 @@ Generata da `pnpm ai:map`: non modificare a mano. Consultare solo con Grep.
 - `public.bar_public` → supabase/migrations/20261013100200_views_config.sql
 - `public.config_changelog` → supabase/migrations/20261013100000_core_schema.sql
 - `public.filter_block_stats` → supabase/migrations/20261013100400_content_filter.sql
+- `public.lexicon_changelog` → supabase/migrations/20261013100500_filter_hardening.sql
 - `public.lexicon_terms` → supabase/migrations/20261013100400_content_filter.sql
 - `public.piazza_messages` → supabase/migrations/20261013100000_core_schema.sql
 - `public.piazza_public` → supabase/migrations/20261013100200_views_config.sql
@@ -65,13 +66,14 @@ Generata da `pnpm ai:map`: non modificare a mano. Consultare solo con Grep.
 - scripts/check-changed.mjs
 - src/app/layout.tsx: RootLayout, metadata
 - src/app/page.tsx: Home
+- src/lib/handle.ts: HANDLE_CHARS, HANDLE_MAX_LENGTH, HANDLE_MIN_LENGTH
 - src/lib/moderation/check-content.test.ts
-- src/lib/moderation/check-content.ts: CheckResult, LexiconEntry, RuleId, SeverityLevel, checkContent, isTargetingPerson
+- src/lib/moderation/check-content.ts: CheckResult, FilterParams, LexiconEntry, RuleId, SeverityLevel, checkContent, compileLexicon
 - src/lib/moderation/guard.test.ts
 - src/lib/moderation/guard.ts: ContentType, GuardResult, ModerationDeps, RULE_MESSAGES, guardContent, pauseMessage
-- src/lib/moderation/normalize.ts: foldCase, normalizeText
+- src/lib/moderation/normalize.ts: NormalizedText, Token, foldCase, normalize, normalizeJoinedText, normalizeText, normalizeWord
 - src/lib/moderation/supabase-deps.test.ts
-- src/lib/moderation/supabase-deps.ts: createModerationDeps, resetLexiconCache
+- src/lib/moderation/supabase-deps.ts: createModerationDeps, resetModerationCache
 - src/types/database.ts: CompositeTypes, Constants, Database, Enums, Json, Tables, TablesInsert, TablesUpdate
 
 ## File grandi (non leggere interi: Grep o Read con offset/limit)

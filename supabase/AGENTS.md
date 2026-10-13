@@ -14,6 +14,8 @@
 - Nessun ref di progetto, URL o chiave nel repo.
 - Grant: default deny (M1 revoca i default di Supabase). Ogni tabella nuova: `enable row level security` + grant espliciti, per colonna se ha colonne d'autore. Ogni funzione nuova: `revoke execute ... from public, anon, authenticated` + grant mirato.
 - Viste `*_public` con `security_invoker = true` quando grant/RLS della tabella bastano; altrimenti `security_invoker = false, security_barrier = true` con il motivo in commento (es. aggregati sui voti, handle senza profili pubblici).
+- **Scritture di contenuti (da M4 in poi): ogni RPC/insert DEVE chiamare `private.assert_can_write(content_type)`** (onboarding, stato account, pausa del filtro) prima di scrivere. Il filtro testuale gira lato server (`src/lib/moderation/`); `record_filter_block` è eseguibile solo dal service role.
+- Lessico del filtro: scritture solo via `admin_lexicon_upsert/delete` (motivazione → `lexicon_changelog`, pubblico senza termine). Guida per compilarlo: `docs/LESSICO.md`.
 - Admin applicativo = `public.is_admin()` (`app_metadata.role = 'admin'` nel JWT). Non ha grant di scrittura su voti, config o risultati.
 - Tipi: `src/types/database.ts` si rigenera solo dal DB di CI. Se il passo "Tipi DB" fallisce, scarica l'artifact `database-types` (`gh run download <id> -n database-types`) e committalo.
 

@@ -1,100 +1,135 @@
 import { describe, expect, it } from "vitest";
-import { checkContent, isTargetingPerson, type LexiconEntry } from "./check-content";
-import { normalizeText } from "./normalize";
+import { checkContent, compileLexicon, type FilterParams, type LexiconEntry } from "./check-content";
+import { normalizeJoinedText, normalizeText } from "./normalize";
 
 // Solo termini fittizi: mai insulti reali nel codice.
 const LEXICON: LexiconEntry[] = [
-  { term: "parolaccia1", level: 2, isPattern: false },
-  { term: "odiotermine", level: 3, isPattern: false },
-  // I pattern si applicano al testo normalizzato: niente doppie, accenti o maiuscole.
-  { term: "minacia(?:re|to)? finta", level: 4, isPattern: true },
+  { term: "parolaccia1", level: 2 },
+  { term: "etichettax", level: 2 }, // etichetta politica fittizia: sta a L2
+  { term: "odiotermine", level: 3 },
+  { term: "88", level: 3 }, // termine numerico
+  { term: "minaccia * finta", level: 4 }, // frase con jolly
 ];
 
-describe("normalizeText", () => {
+const PARAMS: FilterParams = { targetWindowWords: 4, letterJoinMinRun: 3 };
+const check = (text: string) => checkContent(text, { lexicon: LEXICON, params: PARAMS });
+
+describe("normalize", () => {
   it("minuscole e accenti", () => {
     expect(normalizeText("ÒdioTérmine")).toBe("odiotermine");
   });
-  it("leet", () => {
+  it("rimuove i caratteri invisibili (\\p{Cf})", () => {
+    expect(normalizeText("odio​termine")).toBe("odiotermine");
+    expect(normalizeText("odio­ter⁠mi﻿ne")).toBe("odiotermine");
+  });
+  it("leet solo nei token con lettere", () => {
     expect(normalizeText("0d10t3rm1n3")).toBe("odiotermine");
     expect(normalizeText("$pec1@le")).toBe("speciale");
+    expect(normalizeText("nel 1988 erano 88")).toBe("nel 1988 erano 88");
   });
-  it("ripetizioni ridotte", () => {
-    expect(normalizeText("odiooooteeermineee")).toBe("odiotermine");
+  it("doppie ridotte solo sulle lettere", () => {
+    expect(normalizeText("odiooooteeermineee 1100")).toBe("odiotermine 1100");
   });
-  it("lettere singole separate unite", () => {
-    expect(normalizeText("o.d.i.o.t.e.r.m.i.n.e")).toBe("odiotermine");
-    expect(normalizeText("o d i o t e r m i n e")).toBe("odiotermine");
-    expect(normalizeText("o-d_i*o t.e.r.m.i.n.e")).toBe("odiotermine");
+  it("unisce le lettere singole solo con lo stesso separatore", () => {
+    expect(normalizeJoinedText("o.d.i.o.t.e.r.m.i.n.e")).toBe("odiotermine");
+    expect(normalizeJoinedText("è o.d.i.o.t.e.r.m.i.n.e")).toBe("e odiotermine");
+    expect(normalizeJoinedText("o-d.i_o")).toBe("o d i o");
   });
-  it("non unisce una o due lettere isolate", () => {
+  it("la forma senza fusioni resta intatta", () => {
+    expect(normalizeText("c'è l'idea e a o i")).toBe("c e l idea e a o i");
     expect(normalizeText("è a me che parli")).toBe("e a me che parli");
   });
 });
 
 describe("checkContent", () => {
   it("lessico vuoto: tutto passa", () => {
-    expect(checkContent("qualsiasi testo odiotermine", { lexicon: [] })).toEqual({ ok: true });
+    expect(checkContent("odiotermine", { lexicon: [], params: PARAMS })).toEqual({ ok: true });
   });
 
-  it("livello 3 bloccato anche con separatori, leet, accenti e ripetizioni", () => {
-    for (const text of ["sei proprio o.d.i.o.t.e.r.m.i.n.e", "0d10t3rm1n3!", "Òdiotérmine", "odioooterminee"]) {
-      expect(checkContent(text, { lexicon: LEXICON })).toEqual({ ok: false, level: 3, rule: "insulto_odio" });
+  it("livello 3 bloccato con invisibili, separatori, leet, accenti e ripetizioni", () => {
+    for (const text of [
+      "odio​termine",
+      "è o.d.i.o.t.e.r.m.i.n.e",
+      "o d i o t e r m i n e",
+      "0d10t3rm1n3!",
+      "Òdiotérmine",
+      "odioooterminee",
+      "che odiotermine questa legge",
+    ]) {
+      expect(check(text)).toEqual({ ok: false, level: 3, rule: "insulto_odio" });
     }
   });
 
-  it("livello 3 bloccato anche senza destinatario", () => {
-    expect(checkContent("che odiotermine questa legge", { lexicon: LEXICON })).toMatchObject({ ok: false, level: 3 });
+  it("nessuna fusione spuria: frase normale non bloccata", () => {
+    expect(check("c'è l'idea e a o i")).toEqual({ ok: true });
   });
 
-  it("livello 4 via pattern", () => {
-    expect(checkContent("ti faccio una minacciare finta", { lexicon: LEXICON })).toEqual({
-      ok: false,
-      level: 4,
-      rule: "contenuto_illecito",
-    });
+  it("termine numerico del lessico", () => {
+    expect(check("ciao 88")).toMatchObject({ ok: false, level: 3 });
+    expect(check("nel 1988")).toEqual({ ok: true });
+    expect(check("ciao 8")).toEqual({ ok: true });
+  });
+
+  it("frase con jolly = esattamente una parola", () => {
+    expect(check("una minaccia molto finta")).toEqual({ ok: false, level: 4, rule: "contenuto_illecito" });
+    expect(check("una minaccia finta")).toEqual({ ok: true });
+    expect(check("una minaccia davvero molto finta")).toEqual({ ok: true });
   });
 
   it("vince il livello più alto", () => {
-    expect(checkContent("sei un parolaccia1, odiotermine, minaccia finta", { lexicon: LEXICON })).toMatchObject({
-      level: 4,
-    });
+    expect(check("sei un parolaccia1, odiotermine, minaccia molto finta")).toMatchObject({ level: 4 });
   });
 
   it("livello 2 senza destinatario è livello 1 (ammesso)", () => {
-    expect(checkContent("che parolaccia1 di legge", { lexicon: LEXICON })).toEqual({ ok: true });
+    expect(check("che parolaccia1 di legge")).toEqual({ ok: true });
   });
 
   it("livello 2 rivolto a una persona è bloccato", () => {
-    for (const text of ["sei un parolaccia1", "Tu sei parolaccia1", "vai a quel paese parolaccia1", "@mario_rossi parolaccia1"]) {
-      expect(checkContent(text, { lexicon: LEXICON })).toEqual({ ok: false, level: 2, rule: "insulto_a_utente" });
+    for (const text of [
+      "sei un parolaccia1",
+      "sei proprio una parolaccia1",
+      "sei solo un parolaccia1",
+      "sei parolaccia1",
+      "Tu sei parolaccia1",
+      "voi siete parolaccia1",
+      "siete dei parolaccia1",
+      "siete delle parolaccia1",
+      "vai a quel paese parolaccia1",
+      "@mario_rossi parolaccia1",
+    ]) {
+      expect(check(text), text).toEqual({ ok: false, level: 2, rule: "insulto_a_utente" });
     }
   });
 
-  it("parole che contengono un termine non sono bloccate", () => {
-    expect(checkContent("odioterminesimo", { lexicon: LEXICON })).toEqual({ ok: true });
+  it("formula lontana dal termine: nessun blocco", () => {
+    expect(check("Sei un genio, ma questa legge è una parolaccia1")).toEqual({ ok: true });
   });
 
-  it("etichetta politica descrittiva ammessa", () => {
-    expect(checkContent("è una proposta comunista", { lexicon: LEXICON })).toEqual({ ok: true });
-    expect(checkContent("questa idea è da liberisti, discutiamone", { lexicon: LEXICON })).toEqual({ ok: true });
+  it("etichetta politica: bloccata solo se rivolta a una persona", () => {
+    expect(check("sei un etichettax")).toEqual({ ok: false, level: 2, rule: "insulto_a_utente" });
+    expect(check("è una proposta etichettax")).toEqual({ ok: true });
+    expect(check("è una proposta comunista")).toEqual({ ok: true });
+  });
+
+  it("parole che contengono un termine non sono bloccate", () => {
+    expect(check("odioterminesimo")).toEqual({ ok: true });
+  });
+
+  it("menzione non valida (email) non conta come destinatario", () => {
+    expect(check("scrivimi a mario@example parolaccia1")).toEqual({ ok: true });
   });
 
   it("la regola non contiene il testo né il termine", () => {
-    const r = checkContent("sei un parolaccia1", { lexicon: LEXICON });
-    expect(JSON.stringify(r)).not.toContain("parolaccia1");
+    expect(JSON.stringify(check("sei un parolaccia1"))).not.toContain("parolaccia1");
   });
 
-  it("pattern non valido ignorato senza errori", () => {
-    const broken: LexiconEntry[] = [{ term: "(", level: 3, isPattern: true }];
-    expect(checkContent("testo qualsiasi", { lexicon: broken })).toEqual({ ok: true });
+  it("voci del lessico non valide ignorate", () => {
+    const bad: LexiconEntry[] = [{ term: "* *", level: 3 }, { term: "", level: 3 }];
+    expect(checkContent("testo qualsiasi", { lexicon: bad, params: PARAMS })).toEqual({ ok: true });
   });
-});
 
-describe("isTargetingPerson", () => {
-  it("riconosce formule e menzioni", () => {
-    expect(isTargetingPerson("sei una persona")).toBe(true);
-    expect(isTargetingPerson("ciao @utente_x")).toBe(true);
-    expect(isTargetingPerson("la proposta è debole")).toBe(false);
-    expect(isTargetingPerson("scrivimi a mario@example")).toBe(false);
+  it("il lessico si compila una volta per versione", () => {
+    expect(compileLexicon(LEXICON)).toBe(compileLexicon(LEXICON));
+    expect(compileLexicon([...LEXICON])).not.toBe(compileLexicon(LEXICON));
   });
 });
