@@ -6,7 +6,14 @@ import { project2D } from "./pca";
 import { rngFromSeed } from "./prng";
 import { computeReputation } from "./reputation";
 import type { EngineInput, EngineOutput, InsufficientReason } from "./types";
-import { assertValidAccountAges, assertValidConfig, assertValidReputationEvents, assertValidVotes } from "./validate";
+import {
+  assertValidAccountAges,
+  assertValidConfig,
+  assertValidHistory,
+  assertValidJuryEligible,
+  assertValidReputationEvents,
+  assertValidVotes,
+} from "./validate";
 
 export interface EngineResult {
   /**
@@ -42,6 +49,8 @@ export function runEngine(input: EngineInput): EngineResult {
   assertValidVotes(input.votes);
   assertValidAccountAges(input.account_age_days);
   assertValidReputationEvents(input.reputation_events);
+  assertValidHistory(input.history);
+  assertValidJuryEligible(input.jury_eligible);
 
   const { participants, items } = selectEligible(input.votes, input.account_age_days, config);
   const participantSet = new Set(participants);

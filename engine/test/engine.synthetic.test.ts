@@ -445,6 +445,26 @@ describe("validazione dell'input", () => {
     }
   });
 
+  it("history con valori non ammessi o non in forma di elenco → errore", () => {
+    expect(() => runEngine({ ...base, history: { x: ["ponte", "assente", "insufficiente"] } })).not.toThrow();
+    const bad = [
+      { x: ["ponte", "boh"] },
+      { x: "ponte" },
+      { x: [null] },
+      { "": ["ponte"] },
+    ] as unknown as EngineInput["history"][];
+    for (const h of bad) expect(() => runEngine({ ...base, history: h })).toThrow(/history/);
+  });
+
+  it("jury_eligible con pseudo vuoti, non stringa o duplicati → errore senza pseudo nel messaggio", () => {
+    expect(() => runEngine({ ...base, jury_eligible: ["a", "b"] })).not.toThrow();
+    const bad = [["a", ""], ["a", 3], ["pseudo-doppio", "pseudo-doppio"]] as unknown as string[][];
+    for (const j of bad) {
+      expect(() => runEngine({ ...base, jury_eligible: j })).toThrow(/jury_eligible/);
+      expect(() => runEngine({ ...base, jury_eligible: j })).not.toThrow(/pseudo-doppio/);
+    }
+  });
+
   it("eventi di reputazione con campi non validi → errore", () => {
     const ok: ReputationEvent = { author: "a", rater: "b", age_days: 1 };
     const bad: ReputationEvent[] = [

@@ -1,4 +1,4 @@
-import type { EngineConfig, ReputationEvent, Vote } from "./types";
+import type { EngineConfig, ReputationEvent, RunClassification, Vote } from "./types";
 
 // Validazione dell'input. I messaggi d'errore citano chiavi di config, mai pseudo:
 // un errore può finire in un log.
@@ -66,6 +66,38 @@ export function assertValidReputationEvents(events: readonly ReputationEvent[]):
     if (!isNonEmptyString(e.author) || !isNonEmptyString(e.rater) || !isValidAge(e.age_days)) {
       throw new Error("reputation_events: evento non valido (author/rater vuoti o age_days NaN, infinito o negativo)");
     }
+  }
+}
+
+const RUN_CLASSIFICATIONS: ReadonlySet<string> = new Set<RunClassification>([
+  "ponte",
+  "divisivo",
+  "maggioritario",
+  "nessun_consenso",
+  "insufficiente",
+  "assente",
+]);
+
+/**
+ * Storico: item non vuoto → elenco di esiti ammessi, una voce per run, dalla più vecchia
+ * alla più recente. Il tipo non porta id di run: l'ordine e la presenza di una voce per
+ * ogni run (con `assente` quando l'item mancava) sono responsabilità del chiamante (M6).
+ */
+export function assertValidHistory(history: Readonly<Record<string, readonly RunClassification[]>>): void {
+  for (const [item, runs] of Object.entries(history)) {
+    if (item.length === 0 || !Array.isArray(runs)) throw new Error("history: item vuoto o storico non in forma di elenco");
+    for (const r of runs) {
+      if (typeof r !== "string" || !RUN_CLASSIFICATIONS.has(r)) throw new Error("history: esito di run non ammesso");
+    }
+  }
+}
+
+export function assertValidJuryEligible(eligible: readonly string[]): void {
+  const seen = new Set<string>();
+  for (const p of eligible) {
+    if (!isNonEmptyString(p)) throw new Error("jury_eligible: pseudo vuoto o non stringa nell'input");
+    if (seen.has(p)) throw new Error("jury_eligible: pseudo duplicato nell'input");
+    seen.add(p);
   }
 }
 

@@ -46,7 +46,7 @@ Generata da `pnpm ai:map`: non modificare a mano. Consultare solo con Grep.
 - engine/src/core/prng.ts: Rng, hashString, mulberry32, rngFromSeed, shuffle
 - engine/src/core/reputation.ts: computeReputation
 - engine/src/core/types.ts: Classification, ClusterStat, EngineConfig, EngineInput, EngineOutput, GroupAgreement, InsufficientReason, ItemResult, JuryPanel, PrivateOutput, PublicOutput, ReputationEvent, ReputationScore, RunClassification, Vote, VoteValue
-- engine/src/core/validate.ts: assertValidAccountAges, assertValidConfig, assertValidReputationEvents, assertValidVotes
+- engine/src/core/validate.ts: assertValidAccountAges, assertValidConfig, assertValidHistory, assertValidJuryEligible, assertValidReputationEvents, assertValidVotes
 - engine/test/consensus.test.ts
 - engine/test/engine.synthetic.test.ts
 - engine/test/fixtures.ts: SEED_CONFIG
