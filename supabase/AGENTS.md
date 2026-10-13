@@ -18,8 +18,10 @@
 - Tipi: `src/types/database.ts` si rigenera solo dal DB di CI. Se il passo "Tipi DB" fallisce, scarica l'artifact `database-types` (`gh run download <id> -n database-types`) e committalo.
 
 ## Segreto dei pseudo (Vault)
-`private.pseudo` legge `vote_pseudo_secret` da Vault. In CI/locale lo crea `seed.sql` con un valore di test pubblico. In produzione lo crea Manuel una sola volta, a mano, dall'SQL editor (mai nel repo, mai in chat; backup fuori repo, non ruotabile senza migrare i voti):
-`select vault.create_secret('<valore casuale di almeno 32 byte>', 'vote_pseudo_secret', 'HMAC pseudo di voto');`
+`private.pseudo` legge `vote_pseudo_secret` da Vault. In CI/locale lo crea `seed.sql` con un valore di test pubblico. In produzione lo crea Manuel una sola volta, a mano, dall'SQL editor, generato nel DB così il valore non passa da cronologia, chat o repo (backup fuori repo dal Vault; non ruotabile senza migrare i voti):
+`select vault.create_secret(encode(extensions.gen_random_bytes(32), 'hex'), 'vote_pseudo_secret', 'HMAC pseudo di voto');`
+- **Mai `supabase db reset --linked`** né `db push --include-seed` sul remoto: installerebbero il segreto di test.
+- Le migrazioni sul remoto si applicano solo dopo il merge su main e con ok di Manuel; le versioni in `supabase_migrations.schema_migrations` devono coincidere con i nomi file.
 
 ## Test pgTAP
 Ogni tabella/RPC nuova ha test: utente autorizzato riesce, non autorizzato fallisce (anon, authenticated altrui, admin dove vietato). Struttura: `begin; select plan(n); ...; select * from finish(); rollback;`. Un task DB è `verified` solo con job CI `db` verde.

@@ -2,7 +2,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(29);
+select plan(30);
 
 insert into auth.users (id, email) values
   ('11111111-1111-1111-1111-111111111111', 'utente@test.local'),
@@ -25,11 +25,19 @@ insert into public.piazza_messages (id, topic_id, body, author_id, status) value
 insert into public.bar_messages (id, topic_id, body, author_id, expires_at) values
   ('a0000000-0000-0000-0000-000000000008', 'a0000000-0000-0000-0000-000000000001', 'attivo', '11111111-1111-1111-1111-111111111111', now() + interval '1 day'),
   ('a0000000-0000-0000-0000-000000000009', 'a0000000-0000-0000-0000-000000000001', 'scaduto', '11111111-1111-1111-1111-111111111111', now() - interval '1 day');
+insert into public.proposals (id, problem_id, what, how, cost_and_funding, risks)
+  values ('a0000000-0000-0000-0000-000000000010', 'a0000000-0000-0000-0000-000000000002', 'w2', 'h2', 'c2', 'r2');
+-- Proposta 003: 4 voti (sotto min_votes_item = 5). Proposta 010: 5 voti.
 insert into public.proposal_votes (proposal_id, voter_pseudo, value) values
   ('a0000000-0000-0000-0000-000000000003', 'p1', 1),
   ('a0000000-0000-0000-0000-000000000003', 'p2', 1),
   ('a0000000-0000-0000-0000-000000000003', 'p3', -1),
-  ('a0000000-0000-0000-0000-000000000003', 'p4', 0);
+  ('a0000000-0000-0000-0000-000000000003', 'p4', 0),
+  ('a0000000-0000-0000-0000-000000000010', 'p1', 1),
+  ('a0000000-0000-0000-0000-000000000010', 'p2', 1),
+  ('a0000000-0000-0000-0000-000000000010', 'p3', -1),
+  ('a0000000-0000-0000-0000-000000000010', 'p4', 0),
+  ('a0000000-0000-0000-0000-000000000010', 'p5', 1);
 
 -- ---- Struttura delle viste ----
 select hasnt_column('public', v::name, 'author_id'::name, v || ' senza author_id')
@@ -45,10 +53,11 @@ set local role anon;
 select is((select count(*)::integer from public.platform_config), 44, 'anon legge tutta la config (44 chiavi)');
 select is((select value from public.platform_config where key = 'problem_support_threshold'), '25'::jsonb, 'soglia sostegni = 25');
 select is((select count(*)::integer from public.problems_public), 1, 'anon legge problems_public');
-select is((select count(*)::integer from public.proposals_public), 1, 'anon legge proposals_public');
-select is((select agree from public.proposal_tallies where proposal_id = 'a0000000-0000-0000-0000-000000000003'), 2, 'tally: 2 d''accordo');
-select is((select disagree from public.proposal_tallies where proposal_id = 'a0000000-0000-0000-0000-000000000003'), 1, 'tally: 1 contrario');
-select is((select total from public.proposal_tallies where proposal_id = 'a0000000-0000-0000-0000-000000000003'), 4, 'tally: 4 totali');
+select is((select count(*)::integer from public.proposals_public), 2, 'anon legge proposals_public');
+select is((select below_threshold from public.proposal_tallies where proposal_id = 'a0000000-0000-0000-0000-000000000003'), true, 'tally sotto soglia: below_threshold');
+select is((select total from public.proposal_tallies where proposal_id = 'a0000000-0000-0000-0000-000000000003'), null::integer, 'tally sotto soglia: conteggi nascosti');
+select is((select agree from public.proposal_tallies where proposal_id = 'a0000000-0000-0000-0000-000000000010'), 3, 'tally sopra soglia: 3 d''accordo');
+select is((select total from public.proposal_tallies where proposal_id = 'a0000000-0000-0000-0000-000000000010'), 5, 'tally sopra soglia: 5 totali');
 select is((select count(*)::integer from public.piazza_public), 1, 'piazza_public nasconde i rimossi');
 select is((select handle from public.piazza_public), 'utente_ok', 'piazza_public mostra l''handle');
 select is((select count(*)::integer from public.bar_public), 1, 'bar_public nasconde gli scaduti');

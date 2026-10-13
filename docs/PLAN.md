@@ -87,6 +87,7 @@ Specifica: Supabase Auth phone OTP (provider SMS da env; in dev numeri di test) 
 | 3.2 | Onboarding 3 passi + handle + testi legali | `src/app/onboarding/`, `content/legal/` | scrittura negata finché incompleto | pgTAP + Playwright | 3.1 | todo |
 | 3.3 | Sospensioni (scadenza automatica) | `supabase/`, `src/` | utente sospeso → scrittura negata; dopo suspended_until → consentita | pgTAP | 3.2 | todo |
 | 3.4 | Export e cancellazione account | `src/app/account/`, `supabase/` | dopo cancellazione: zero righe con il suo pseudo; contenuti pubblici anonimizzati | pgTAP + Vitest | 3.2 | todo |
+| 3.5 | Guardia segreto di test: app e motore rifiutano di partire in produzione se `vote_pseudo_secret` è il valore di test di `seed.sql` | `src/lib/`, `engine/src/` | avvio in produzione col segreto di test → errore esplicito | Vitest | 3.1 | todo |
 
 ### M4 — Contenuti core
 Specifica: Server Action → Zod → rate limit (config) → `checkContent` → RPC/insert. Problemi con checklist di formulazione neutra; `pending` → `active` a problem_support_threshold sostegni. Riformulazioni votabili, accettate se superano il testo attuale con ≥ reformulation_min_votes; storico visibile. Schede: fatto + fonte obbligatoria, tipo fonte mostrato, approvazione curatori (permesso in M8; qui stato `proposed`). Proposte solo su problemi attivi, campi obbligatori tranne esempio estero, autore mai mostrato. Voto d'accordo/contrario/passo modificabile; ordine proposte casuale per utente (seed di sessione). Argomenti pro/contro, "utile/non utile", ordinati per cross_utility (prima della run: ordine casuale). Ricerca full-text Postgres config `italian` su problemi, schede, proposte (Agenda aggiunta in M9). Pagine funzionali grezze.
@@ -98,6 +99,7 @@ Specifica: Server Action → Zod → rate limit (config) → `checkContent` → 
 | 4.3 | Proposte + voto + ordine casuale | `src/app/proposte/` | voto unico per pseudo; proposta su problema pending rifiutata | pgTAP + Playwright | 4.1 | todo |
 | 4.4 | Argomenti + rating | `src/app/proposte/` | autore non esposto da nessuna query anon/authenticated | pgTAP | 4.3 | todo |
 | 4.5 | Ricerca full-text | `supabase/`, `src/app/cerca/` | "casa" trova "case"/"abitazione" via stemming italiano dove applicabile | Vitest su DB CI | 4.1 | todo |
+| 4.6 | Viste conteggio sostegni dei problemi e voti delle riformulazioni con la stessa soglia minima dei tallies (`min_votes_item`, `below_threshold`) | `supabase/` | sotto soglia conteggi null; nessun pseudo esposto | pgTAP | 4.1 | todo |
 
 ### M5 — Piazza e Bar
 Specifica: Piazza per tema (e opz. problema), profondità max 2, limite piazza_max_chars, voto via `cast_vote`. Due liste: "Più condivisi" per bridging_score, "Nuovi" = ultime piazza_new_window_hours non ancora valutati. Slow mode: se un thread supera slowmode_trigger_msgs in slowmode_window_min, un messaggio per utente ogni slowmode_user_interval_min, con motivo mostrato. Promozione a proposta: se bridging_score ≥ promotion_min_bridging e voti ≥ promotion_min_votes → form proposta precompilato (origin=piazza, origin_message_id); il messaggio linka la proposta. Bar: stessa struttura, nessun voto, fuori dal motore, expires_at = created_at + bar_retention_days; pg_cron giornaliero elimina gli scaduti tranne quelli con segnalazioni L4 aperte (attivo da M7). Entrambi: checkContent, rate limit, `collapsed_pending` a auto_collapse_reports segnalazioni (collegato in M7). Niente condivisione con commento, niente contatori sulle persone.
@@ -108,6 +110,7 @@ Specifica: Piazza per tema (e opz. problema), profondità max 2, limite piazza_m
 | 5.2 | Slow mode | `supabase/`, `src/lib/` | 21° messaggio in 10 min attiva limite per utente | pgTAP | 5.1 | todo |
 | 5.3 | Promozione a proposta | `src/app/piazza/` | negata sotto soglia; sopra soglia crea proposta con origin=piazza | pgTAP + Playwright | 5.1 | todo |
 | 5.4 | Bar + pg_cron scadenza | `src/app/bar/`, `supabase/` | messaggio scaduto eliminato dal job | pgTAP (invocazione diretta della funzione del job) | 5.1 | todo |
+| 5.5 | Trigger o RPC che impone profondità ≤ 1 e stesso `topic_id` del genitore per Piazza e Bar (il CHECK di M1 non lo garantisce) | `supabase/` | risposta a risposta o su altro tema rifiutata | pgTAP | 5.1 | todo |
 
 ### M6 — Motore integrato
 Specifica: `engine/src/run.ts` con service role: legge voti (solo pseudo) e config, chiama il core E1, scrive output. Pseudo degli autori calcolati via RPC privata, solo in memoria. Tabelle: `consensus_runs` (id, started_at, finished_at, status, n_participants, n_items, k, silhouette, seed, params jsonb, code_version sha), `consensus_cluster_stats` (run_id, cluster_label "Gruppo 1..k", size), `item_consensus` (run_id, item_type, item_id, approval_by_cluster jsonb, overall_approval, bridging_score, n_votes, classification, stable_ponte), `private.jury_panels` (run_id, panel_id, user_id) sovrascritta a ogni run, `private.reputation` (user_id, score, updated_at). Aggiorna `piazza_messages.bridging_score` e `arguments.cross_utility`. GitHub Actions: doppio cron UTC + guardia "sono le 03 a Roma?", avvio manuale; log solo aggregati.
@@ -146,6 +149,7 @@ Specifica: a fine run, per tema: problemi attivi → proposte stable_ponte con a
 | 9.1 | `agenda_versions` + generazione nel motore | `supabase/`, `engine/src/` | Agenda generata da dati seed; nessuna nuova versione se invariata | Vitest + pgTAP | M8 | todo |
 | 9.2 | Pagine Agenda + trasparenza | `src/app/` | tutte raggiungibili da anon | Playwright 375/768/1440 | 9.1 | todo |
 | 9.3 | Area admin limitata | `src/app/admin/` | admin non altera voti/agenda/esiti | pgTAP | 9.1 | todo |
+| 9.4 | Ruolo admin verificato anche lato DB (tabella admin o revoca immediata), non solo dal claim JWT `app_metadata.role` | `supabase/` | admin revocato → `admin_set_config` negata subito, anche con JWT ancora valido | pgTAP | 9.3 | todo |
 
 ### M10 — Revisione finale
 | # | Task | Possiede | Accettazione | Verifica | Dipende | Stato |
@@ -182,6 +186,13 @@ Unico stream parallelo: **E1** (solo `engine/src/core/`, `engine/test/`, `docs/A
 | 2026-10-13 | `my_vote` copre anche `problem` (1 = sostenuto) e `argument` (1 utile / -1 non utile) | una sola RPC per "il mio voto" | RPC separate |
 | 2026-10-13 | Tipi DB generati nel job CI `db` (diff + artifact `database-types`) | niente Docker locale | tipi dal DB remoto arengo-dev |
 | 2026-10-13 | Migrazioni M1 applicate ad arengo-dev via MCP (ok di Manuel), versioni in `schema_migrations` allineate ai nomi file; `seed.sql` NON applicato in remoto | `db push` futuri non riapplicano; il segreto di test resta solo in CI | `db push` con CLI (richiede password DB) |
+| 2026-10-13 | Avvisi ERROR `security_definer_view` accettati (piazza_public, bar_public, *_tallies, argument_utility) | invoker esporrebbe tabelle di voto e profili; mitigato da security_barrier, colonne esplicite, soglia sui conteggi | viste invoker + policy su voti/profili |
+| 2026-10-13 | Avvisi WARN sulle RPC SECURITY DEFINER eseguibili da authenticated voluti | sono l'unica via di voto/config; i controlli stanno dentro la funzione | RPC invoker con grant sulle tabelle |
+| 2026-10-13 | Handle `[A-Za-z0-9_]{3,20}`, unicità case-insensitive (`lower(handle)`) | niente omoglifi/spazi; due handle che differiscono solo per maiuscole confondono | citext, unicode |
+| 2026-10-13 | Stati come `text` + CHECK (non enum); restringere anche con Zod lato app | aggiungere stati (es. `removed`) con una migrazione semplice | enum Postgres |
+| 2026-10-13 | Hardening M1 in migrazione separata `20261013100300` | le 3 migrazioni M1 sono già su arengo-dev: mai modificarle | riscrivere le migrazioni |
+| 2026-10-13 | Conteggi pubblici dei voti solo da `min_votes_item` in su (`below_threshold`); timestamp dei voti troncati al giorno UTC | attacco differenziale su pochi voti; meno correlazione con log/accessi | conteggi sempre visibili; timestamp completi |
+| 2026-10-13 | Modifiche dirette a `platform_config` registrate da trigger ("modifica diretta senza funzione"); changelog append-only | principio 7 anche per chi usa service role (limite: chi è superuser può disattivare i trigger, da dichiarare in ALGORITMO.md) | solo `admin_set_config` |
 | 2026-10-13 | `node_modules/**` leggibile dagli agenti (tolto dal deny) | il blocco Next in AGENTS.md rimanda ai doc in `node_modules/next/dist/docs/` | deny totale |
 
 ## Candidati Skill (creare dopo 2 esecuzioni manuali)
