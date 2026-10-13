@@ -63,11 +63,11 @@ Algoritmo (funzioni pure, input = voti `{pseudo, item, value}` + config):
 
 | # | Task | Possiede | Accettazione | Verifica | Dipende | Stato |
 |---|---|---|---|---|---|---|
-| E1.1 | Matrice, centraggio, PCA, PRNG, k-means, silhouette | `engine/src/core/` | test unitari su casi noti | `pnpm --filter engine test` | M0 | todo |
-| E1.2 | p_agree, bridging, classificazione, stabilità | `engine/src/core/` | test con valori attesi calcolati a mano | idem | E1.1 | todo |
-| E1.3 | Panel giuria + reputazione | `engine/src/core/` | panel sempre con ≥ jury_min_buckets gruppi; nessun output con etichetta di gruppo | idem | E1.1 | todo |
-| E1.4 | Generatore dati sintetici + test: 2 gruppi polarizzati (200 utenti) + 5 item trasversali → trovati come ponte, divisivi classificati; brigading: 50 account nuovi in blocco non cambiano classificazione; stesso seed → output identico (deep equal) | `engine/test/` | tutti verdi | idem | E1.2, E1.3 | todo |
-| E1.5 | Bozza `docs/ALGORITMO.md` in italiano semplice (passi, parametri, limiti, cosa NON si salva, limite del principio 7) | `docs/ALGORITMO.md` | ogni parametro citato esiste nel seed config | lettura + grep chiavi | E1.4 | todo |
+| E1.1 | Matrice, centraggio, PCA, PRNG, k-means, silhouette | `engine/src/core/` | test unitari su casi noti | `pnpm --filter engine test` | M0 | verified |
+| E1.2 | p_agree, bridging, classificazione, stabilità | `engine/src/core/` | test con valori attesi calcolati a mano | idem | E1.1 | verified |
+| E1.3 | Panel giuria + reputazione | `engine/src/core/` | panel sempre con ≥ jury_min_buckets gruppi; nessun output con etichetta di gruppo | idem | E1.1 | verified |
+| E1.4 | Generatore dati sintetici + test: 2 gruppi polarizzati (200 utenti) + 5 item trasversali → trovati come ponte, divisivi classificati; brigading: 50 account nuovi in blocco non cambiano classificazione; stesso seed → output identico (deep equal) | `engine/test/` | tutti verdi | idem | E1.2, E1.3 | verified |
+| E1.5 | Bozza `docs/ALGORITMO.md` in italiano semplice (passi, parametri, limiti, cosa NON si salva, limite del principio 7) | `docs/ALGORITMO.md` | ogni parametro citato esiste nel seed config | lettura + grep chiavi | E1.4 | verified |
 
 ### M2 — Filtro contenuti pre-invio
 Specifica: tabella `lexicon_terms` (term, level 2|3|4, is_pattern, notes), solo admin, **seed vuoto** (TODO Manuel; nei test termini fittizi). `filter_block_stats` (day, level, content_type, count). `private.filter_strikes` (user_id, blocked_at) solo per la pausa, nessun testo, pulizia > 24h. `checkContent(text, context)`: normalizzazione (minuscole, NFKD senza accenti, leet 0→o 1→i 3→e 4→a 5→s 7→t @→a $→s, ripetizioni ridotte, separatori tra lettere singole rimossi); livello 2 = termine offensivo + pattern rivolto alla persona ("sei un", "tu sei", menzione di handle, "vai a"). Esito `ok` | `blocked{level, rule}`. Il testo bloccato non si salva né si logga. Nessuna sanzione automatica; dopo filter_l3_blocks_pause blocchi L3 in 24h → pausa di scrittura filter_pause_minutes.
@@ -194,6 +194,12 @@ Unico stream parallelo: **E1** (solo `engine/src/core/`, `engine/test/`, `docs/A
 | 2026-10-13 | Conteggi pubblici dei voti solo da `min_votes_item` in su (`below_threshold`); timestamp dei voti troncati al giorno UTC | attacco differenziale su pochi voti; meno correlazione con log/accessi | conteggi sempre visibili; timestamp completi |
 | 2026-10-13 | Modifiche dirette a `platform_config` registrate da trigger ("modifica diretta senza funzione"); changelog append-only | principio 7 anche per chi usa service role (limite: chi è superuser può disattivare i trigger, da dichiarare in ALGORITMO.md) | solo `admin_set_config` |
 | 2026-10-13 | `node_modules/**` leggibile dagli agenti (tolto dal deny) | il blocco Next in AGENTS.md rimanda ai doc in `node_modules/next/dist/docs/` | deny totale |
+| 2026-10-13 | E1: voti dei partecipanti contati su tutti gli item; idoneità degli item (`min_votes_item`) e approvazione totale (agree/voti, senza lisciatura) contano solo i partecipanti idonei | account nuovi in blocco non rendono "valido" un item né spostano i totali del motore | contare tutti i voti |
+| 2026-10-13 | E1: item `insufficiente` se anche un solo gruppo ha < `min_votes_per_cluster` voti; `stable_ponte` = ponte nella run corrente + nelle `bridging_stable_runs`-1 precedenti | bridging e divisività non misurabili senza tutti i gruppi | min sui soli gruppi con voti |
+| 2026-10-13 | E1: k-means++ singolo per k, stop quando le assegnazioni non cambiano o l'inerzia non scende (nessun max-iter); silhouette a parità → k minore; PCA `center:false` (matrice già centrata), componenti mancanti = 0; esito `insufficient` anche per `no_items`/`no_structure` | determinismo senza costanti arbitrarie | restart multipli, max-iter fisso |
+| 2026-10-13 | E1: `runEngine` → `{output, groups}`; `OpinionGroups` tiene pseudo→gruppo in campo `#private` (JSON = `{k}`) ed espone solo `drawStratified`, `juryPanels`, `reputation`; seed separati `<seed>:kmeans` e `<seed>:jury` | gruppi solo in memoria ma usabili da M6/M8 nella stessa run | restituire la mappa |
+| 2026-10-13 | E1: panel giuria disgiunti, il massimo possibile; idonei senza gruppo esclusi; nessun panel se k < `jury_min_buckets`. Sorteggio stratificato: resti più grandi, chi non ha gruppo = strato a parte | diversità garantita solo sui gruppi della run | panel con membri senza gruppo |
+| 2026-10-13 | E1: crediti reputazione 1 / 0,25 come costanti nel codice (1 solo se autore e votante hanno gruppi noti e diversi; 0 a sé stessi) | non sono nel seed: portarli in `platform_config` richiede una migrazione fuori da E1 | nuove chiavi config |
 
 ## Candidati Skill (creare dopo 2 esecuzioni manuali)
 | Candidato | Trigger | Input | Output | Esecuzioni manuali |

@@ -36,7 +36,26 @@ Generata da `pnpm ai:map`: non modificare a mano. Consultare solo con Grep.
 
 ## File → export
 
-- engine/test/smoke.test.ts
+- engine/src/core/consensus.ts: classify, computeItemResults, groupLabel, isStablePonte, pAgree
+- engine/src/core/engine.ts: EngineResult, runEngine
+- engine/src/core/groups.ts: OpinionGroups, formJuryPanels, stratifiedDraw
+- engine/src/core/index.ts
+- engine/src/core/kmeans.ts: ChooseKResult, KMeansResult, chooseK, kmeans, silhouette
+- engine/src/core/matrix.ts: VoteMatrix, buildCenteredMatrix, selectItems, selectParticipants
+- engine/src/core/pca.ts: project2D
+- engine/src/core/prng.ts: Rng, hashString, mulberry32, rngFromSeed, shuffle
+- engine/src/core/reputation.ts: CROSS_GROUP_CREDIT, SAME_GROUP_CREDIT, computeReputation
+- engine/src/core/types.ts: Classification, ClusterStat, EngineConfig, EngineInput, EngineOutput, GroupAgreement, InsufficientReason, ItemResult, JuryPanel, ReputationEvent, ReputationScore, Vote, VoteValue
+- engine/src/core/validate.ts: assertValidConfig, assertValidVotes
+- engine/test/consensus.test.ts
+- engine/test/engine.synthetic.test.ts
+- engine/test/fixtures.ts: SEED_CONFIG
+- engine/test/groups.test.ts
+- engine/test/matrix.test.ts
+- engine/test/pca-kmeans.test.ts
+- engine/test/privacy.test.ts
+- engine/test/prng.test.ts
+- engine/test/synthetic.ts: BASE_OPTIONS, SyntheticData, SyntheticOptions, generatePolarized
 - scripts/ai-map.mjs: buildMap, extractExports, extractTables, isEntrypoint, listFiles, routeFromFile
 - scripts/ai-map.test.mjs
 - scripts/check-changed.mjs
