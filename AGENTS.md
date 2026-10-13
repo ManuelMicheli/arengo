@@ -61,8 +61,17 @@ Le aree `src/`, `supabase/`, `engine/` hanno il proprio `AGENTS.md` (creato dall
 | brief per un sotto-agente | `.ai/brief-agente.md` |
 
 ## Comandi
-Definiti in M0 (aggiornare qui): `pnpm typecheck` · `pnpm lint` · `pnpm test` · `pnpm build` · `pnpm ai:map` · `pnpm check:changed`.
-DB: niente Docker locale. Test SQL/RLS girano in CI (`supabase start` + `supabase test db`); app su progetto Supabase dev remoto. Supabase CLI via `pnpm dlx supabase`.
+| Comando | Cosa fa |
+|---|---|
+| `pnpm dev` | server di sviluppo (http://localhost:3000) |
+| `pnpm typecheck` | `next typegen` + `tsc` app + typecheck `engine` |
+| `pnpm lint` | ESLint su tutto il repo |
+| `pnpm test` | Vitest app (`src/`, `scripts/`) + `engine` |
+| `pnpm --filter engine test` | solo test del motore |
+| `pnpm build` | build Next.js |
+| `pnpm ai:map` / `pnpm ai:check` | rigenera / verifica `.ai/mappa-codice.md` (hook PostToolUse la rigenera da solo) |
+| `pnpm check:changed` | typecheck+lint+test solo dei pacchetti toccati rispetto a main |
+DB: niente Docker locale. Test SQL/RLS girano solo nel job CI `db` (`supabase start` + `db reset` + `test db`); app su progetto Supabase dev remoto. Supabase CLI via `pnpm dlx supabase@2.120.0` (stessa versione della CI). TypeScript fermo a 6.x finché typescript-eslint non supporta TS 7.
 Windows/PowerShell: niente `&&` in PowerShell 5.1; per i comandi POSIX usare il tool Bash.
 
 ## Git
@@ -74,9 +83,20 @@ Creare/cancellare risorse esterne (repo GitHub, progetti Supabase/Vercel/Upstash
 ## Trappole note
 - Cron GitHub Actions è UTC: le 03:00 Europe/Rome cambiano con l'ora legale → doppio cron + guardia oraria nello script.
 - Il segreto HMAC dei pseudo non è ruotabile senza migrare tutti i voti: backup fuori repo.
+- `ai:map` include i file non tracciati: prima di committare la mappa, niente file scratch non ignorati nel tree.
 
 ## Fatto vuol dire
 - [ ] criteri del task in `docs/PLAN.md` verificati con `/verify` (output reale)
 - [ ] typecheck, lint, test verdi; CI verde sul branch
 - [ ] nessun segreto/dato personale nel diff; nessuna soglia hardcoded
 - [ ] `pnpm ai:map` rigenerata, stato task aggiornato in `docs/PLAN.md`
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+## This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->
