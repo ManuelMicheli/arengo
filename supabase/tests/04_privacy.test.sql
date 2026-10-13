@@ -84,8 +84,9 @@ select throws_ok($$insert into public.proposal_votes (proposal_id, voter_pseudo,
 -- ---- admin ----
 select set_config('request.jwt.claims',
   '{"sub":"66666666-6666-6666-6666-666666666666","role":"authenticated","app_metadata":{"role":"admin"}}', true);
-select throws_ok(format('update public.%I set created_at = now()', t), '42501', null, 'admin non fa UPDATE su ' || t)
-from unnest(array['proposal_votes', 'piazza_votes', 'problem_supports', 'argument_ratings', 'problem_reformulation_votes']) as t;
+select throws_ok(format('update public.%I set %I = %I', t, c, c), '42501', null, 'admin non fa UPDATE su ' || t)
+from (values ('proposal_votes', 'value'), ('piazza_votes', 'value'), ('problem_supports', 'created_at'),
+             ('argument_ratings', 'useful'), ('problem_reformulation_votes', 'value')) as x(t, c);
 select throws_ok(format('delete from public.%I', t), '42501', null, 'admin non fa DELETE su ' || t)
 from unnest(array['proposal_votes', 'piazza_votes', 'problem_supports', 'argument_ratings', 'problem_reformulation_votes']) as t;
 select throws_ok($$select * from public.proposal_votes$$, '42501', null, 'admin non legge i voti');
