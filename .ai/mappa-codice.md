@@ -70,6 +70,8 @@ Generata da `pnpm ai:map`: non modificare a mano. Consultare solo con Grep.
 - src/lib/moderation/guard.test.ts
 - src/lib/moderation/guard.ts: ContentType, GuardResult, ModerationDeps, RULE_MESSAGES, guardContent, pauseMessage
 - src/lib/moderation/normalize.ts: foldCase, normalizeText
+- src/lib/moderation/supabase-deps.test.ts
+- src/lib/moderation/supabase-deps.ts: createModerationDeps, resetLexiconCache
 - src/types/database.ts: CompositeTypes, Constants, Database, Enums, Json, Tables, TablesInsert, TablesUpdate
 
 ## File grandi (non leggere interi: Grep o Read con offset/limit)

@@ -121,6 +121,34 @@ isOneToOne: false
       referencedColumns: ["key"]
     }
                   ]
+                },"filter_block_stats": {
+                  Row: {
+                    "content_type": string,"count": number,"day": string,"level": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "content_type": string,"count"?: number,"day": string,"level": number
+                  }
+                  Update: {
+                    "content_type"?: string,"count"?: number,"day"?: string,"level"?: number
+                  }
+                  Relationships: [
+                    
+                  ]
+                },"lexicon_terms": {
+                  Row: {
+                    "created_at": string,"id": string,"is_pattern": boolean,"level": number,"notes": string | null,"term": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"id"?: string,"is_pattern"?: boolean,"level": number,"notes"?: string | null,"term": string
+                  }
+                  Update: {
+                    "created_at"?: string,"id"?: string,"is_pattern"?: boolean,"level"?: number,"notes"?: string | null,"term"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
                 },"piazza_messages": {
                   Row: {
                     "author_id": string | null,"body": string,"bridging_score": number | null,"created_at": string,"depth": number,"id": string,"parent_id": string | null,"problem_id": string | null,"status": string,"topic_id": string
@@ -739,8 +767,14 @@ isOneToOne: false
 "my_vote":
 { Args: { "item_id": string,"item_type": string }; Returns: number
                            },
+"my_writing_pause":
+{ Args: Record<PropertyKey, never>; Returns: string
+                           },
 "rate_argument":
 { Args: { "argument_id": string,"useful": boolean }; Returns: undefined
+                           },
+"record_filter_block":
+{ Args: { "content_type": string,"level": number }; Returns: string
                            },
 "support_problem":
 { Args: { "problem_id": string }; Returns: undefined
