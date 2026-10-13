@@ -40,11 +40,11 @@ Specifica:
 
 | # | Task | Possiede | Accettazione | Verifica | Dipende | Stato |
 |---|---|---|---|---|---|---|
-| 1.1 | Migrazioni schemi, tabelle, vincoli, indici (FK, (topic_id, created_at), status), RLS attiva ovunque default deny, grant: nessuno su `private` | `supabase/migrations/` | `supabase db reset` pulito in CI | job CI `db` | M0 | todo |
-| 1.2 | `private.pseudo` + RPC voto/sostegno/rating/my_vote con controlli onboarding/status | `supabase/migrations/` | voto doppio aggiorna invece di duplicare; utente non onboardato/sospeso → errore | pgTAP | 1.1 | todo |
-| 1.3 | Viste pubbliche e aggregati; `admin_set_config` + changelog; seed config | `supabase/migrations/`, `supabase/seed.sql` | viste senza author_id; config leggibile da anon | pgTAP | 1.1 | todo |
-| 1.4 | Test pgTAP: anon non legge voti; authenticated non legge voti altrui né `voter_pseudo`; admin non può UPDATE/DELETE voti; `private` non esposto; `author_id` non leggibile da anon/authenticated | `supabase/tests/` | tutti verdi | `supabase test db` in CI | 1.2, 1.3 | todo |
-| 1.5 | Tipi generati in `src/types/database.ts` (generatore Supabase in CI o `pnpm dlx supabase gen types` sul DB di CI) | `src/types/` | typecheck verde | `pnpm typecheck` | 1.1 | todo |
+| 1.1 | Migrazioni schemi, tabelle, vincoli, indici (FK, (topic_id, created_at), status), RLS attiva ovunque default deny, grant: nessuno su `private` | `supabase/migrations/` | `supabase db reset` pulito in CI | job CI `db` | M0 | doing |
+| 1.2 | `private.pseudo` + RPC voto/sostegno/rating/my_vote con controlli onboarding/status | `supabase/migrations/` | voto doppio aggiorna invece di duplicare; utente non onboardato/sospeso → errore | pgTAP | 1.1 | doing |
+| 1.3 | Viste pubbliche e aggregati; `admin_set_config` + changelog; seed config | `supabase/migrations/`, `supabase/seed.sql` | viste senza author_id; config leggibile da anon | pgTAP | 1.1 | doing |
+| 1.4 | Test pgTAP: anon non legge voti; authenticated non legge voti altrui né `voter_pseudo`; admin non può UPDATE/DELETE voti; `private` non esposto; `author_id` non leggibile da anon/authenticated | `supabase/tests/` | tutti verdi | `supabase test db` in CI | 1.2, 1.3 | doing |
+| 1.5 | Tipi generati in `src/types/database.ts` (generatore Supabase in CI o `pnpm dlx supabase gen types` sul DB di CI) | `src/types/` | typecheck verde | `pnpm typecheck` | 1.1 | doing |
 
 ### E1 — Motore core puro (stream parallelo, solo `engine/`)
 Dimostrazione: test sintetici verdi, output identico con stesso seed. Nessun accesso a DB, nessuna migrazione, non tocca `package.json` root né lockfile (dipendenze già installate in M0).
@@ -175,6 +175,12 @@ Unico stream parallelo: **E1** (solo `engine/src/core/`, `engine/test/`, `docs/A
 | 2026-10-13 | `.gitattributes` con `eol=lf`; mappa senza timestamp | `ai:check` deterministico tra Windows e CI Linux | normalizzare solo nello script |
 | 2026-10-13 | Email autore git = noreply GitHub (config locale del repo) | repo pubblico: niente email personali nei commit | email personale |
 | 2026-10-13 | RPC config rinominata `admin_set_config` | `set_config` collide con il builtin `pg_catalog.set_config` | `public.set_config` qualificato ovunque |
+| 2026-10-13 | Seed `platform_config` in una migrazione, `seed.sql` solo per il segreto Vault di test | `seed.sql` non va in produzione con `db push`; config identica in CI e prod | seed config in `seed.sql` |
+| 2026-10-13 | Voto riformulazioni: +1 preferisco la riformulazione / -1 preferisco il testo attuale (niente passo) | confronto tra due testi | -1/0/+1 |
+| 2026-10-13 | Default privileges di Supabase revocati su `public`; grant per colonna senza colonne d'autore | default deny reale: Supabase concede tutto ad anon/authenticated | solo RLS |
+| 2026-10-13 | Viste definer (`security_invoker = false`): `piazza_public`, `bar_public`, `*_tallies`, `argument_utility`; invoker: `problems_public`, `proposals_public`, `arguments_public` | aggregati su tabelle di voto illeggibili; handle senza profili pubblici | tutte invoker con policy su profiles/voti |
+| 2026-10-13 | `my_vote` copre anche `problem` (1 = sostenuto) e `argument` (1 utile / -1 non utile) | una sola RPC per "il mio voto" | RPC separate |
+| 2026-10-13 | Tipi DB generati nel job CI `db` (diff + artifact `database-types`) | niente Docker locale | tipi dal DB remoto arengo-dev |
 | 2026-10-13 | `node_modules/**` leggibile dagli agenti (tolto dal deny) | il blocco Next in AGENTS.md rimanda ai doc in `node_modules/next/dist/docs/` | deny totale |
 
 ## Candidati Skill (creare dopo 2 esecuzioni manuali)
