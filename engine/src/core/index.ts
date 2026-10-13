@@ -4,3 +4,4 @@ export * from "./prng";
 export * from "./matrix";
 export * from "./pca";
 export * from "./kmeans";
+export * from "./consensus";
