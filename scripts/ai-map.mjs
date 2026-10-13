@@ -23,7 +23,8 @@ export function listFiles() {
     encoding: "utf8",
   });
   return [...new Set(out.split("\0").filter(Boolean))]
-    .filter((f) => existsSync(join(ROOT, f)) && f !== OUT)
+    // Solo file: git elenca come voce singola (con "/" finale) i repo annidati non tracciati, es. worktree.
+    .filter((f) => f !== OUT && !f.endsWith("/") && existsSync(join(ROOT, f)) && statSync(join(ROOT, f)).isFile())
     .sort();
 }
 
