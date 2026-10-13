@@ -42,7 +42,7 @@ Generata da `pnpm ai:map`: non modificare a mano. Consultare solo con Grep.
 - scripts/check-changed.mjs
 - src/app/layout.tsx: RootLayout, metadata
 - src/app/page.tsx: Home
-- src/types/database.ts
+- src/types/database.ts: CompositeTypes, Constants, Database, Enums, Json, Tables, TablesInsert, TablesUpdate
 
 ## File grandi (non leggere interi: Grep o Read con offset/limit)
 
