@@ -74,9 +74,9 @@ Specifica: tabella `lexicon_terms` (term, level 2|3|4, is_pattern, notes), solo 
 
 | # | Task | Possiede | Accettazione | Verifica | Dipende | Stato |
 |---|---|---|---|---|---|---|
-| 2.1 | Migrazione lexicon/stats/strikes + RLS | `supabase/` | anon/authenticated non leggono lexicon né strikes | pgTAP | M1 | doing |
-| 2.2 | `checkContent` + normalizzazione | `src/lib/moderation/` | casi "f.r.o.c.i.o"-style (con termine fittizio), leet, accenti, ripetizioni; etichetta politica descrittiva ammessa | Vitest | 2.1 | doing |
-| 2.3 | Integrazione: stats, pausa, messaggio all'utente con regola | `src/lib/moderation/` | nessun testo bloccato in DB, log o console (test che intercetta console) | Vitest + pgTAP | 2.2 | doing |
+| 2.1 | Migrazione lexicon/stats/strikes + RLS | `supabase/` | anon/authenticated non leggono lexicon né strikes | pgTAP | M1 | verified |
+| 2.2 | `checkContent` + normalizzazione | `src/lib/moderation/` | casi "f.r.o.c.i.o"-style (con termine fittizio), leet, accenti, ripetizioni; etichetta politica descrittiva ammessa | Vitest | 2.1 | verified |
+| 2.3 | Integrazione: stats, pausa, messaggio all'utente con regola | `src/lib/moderation/` | nessun testo bloccato in DB, log o console (test che intercetta console) | Vitest + pgTAP | 2.2 | verified |
 
 ### M3 — Auth, onboarding, privacy
 Specifica: Supabase Auth phone OTP (provider SMS da env; in dev numeri di test) + CAPTCHA Turnstile; un numero = un account, il numero resta solo in auth.users. Onboarding obbligatorio in 3 passi: (a) maggiore età; (b) regole + Scala (salva rules_version_accepted); (c) consenso art. 9 con checkbox non preselezionata e testo (voti → opinioni politiche, pseudonimizzazione, la piattaforma non chiede l'orientamento, come revocare). Testi in `content/legal/*.md` con `[DA VERIFICARE CON LEGALE]`. Handle: 3-20, unico, rifiutato se `checkContent` ≠ ok. `proxy.ts` reindirizza all'onboarding (UX), ma il blocco vero è nelle RPC/RLS (M1). Revoca consenso = cancellazione account (spiegato in UI). Export (art. 20): JSON con profilo, contenuti, voti propri via pseudo. Cancellazione: elimina voti, sostegni, rating (via pseudo), Bar, reputazione; Piazza/proposte/argomenti cancellati o anonimizzati ("utente eliminato") secondo `account_deletion_mode`. Rate limit OTP per IP e per numero (Upstash).
