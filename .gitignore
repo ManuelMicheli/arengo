@@ -1,0 +1,14 @@
+node_modules/
+.next/
+.turbo/
+coverage/
+playwright-report/
+test-results/
+.env
+.env.*
+!.env.example
+.vercel/
+supabase/.temp/
+supabase/.branches/
+.claude/settings.local.json
+*.log

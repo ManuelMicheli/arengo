@@ -1,0 +1,32 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pnpm typecheck*)",
+      "Bash(pnpm lint*)",
+      "Bash(pnpm test*)",
+      "Bash(pnpm build*)",
+      "Bash(pnpm ai:map*)",
+      "Bash(pnpm ai:check*)",
+      "Bash(pnpm check:changed*)",
+      "Bash(pnpm --filter * test*)",
+      "Bash(git status*)",
+      "Bash(git diff*)",
+      "Bash(git log*)",
+      "Bash(gh run list*)",
+      "Bash(gh run view*)",
+      "Bash(gh pr view*)"
+    ],
+    "deny": [
+      "Read(./pnpm-lock.yaml)",
+      "Read(./node_modules/**)",
+      "Read(./**/node_modules/**)",
+      "Read(./.next/**)",
+      "Read(./.turbo/**)",
+      "Read(./coverage/**)",
+      "Read(./playwright-report/**)",
+      "Read(./test-results/**)",
+      "Read(./.env)",
+      "Read(./.env.local)"
+    ]
+  }
+}
