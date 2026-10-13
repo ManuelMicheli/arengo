@@ -18,12 +18,12 @@ Dimostrazione: `pnpm dev` mostra una home grezza; CI verde su PR con job app + j
 
 | # | Task | Possiede | Accettazione | Verifica | Dipende | Stato |
 |---|---|---|---|---|---|---|
-| 0.1 | Scaffold Next.js 16 (ultima stabile, versione dal package.json reale) + TS strict + Tailwind + ESLint, pnpm workspace con pacchetti root (app) e `engine/` | root, `src/app/` | `pnpm dev` serve `/` con titolo "Arengo"; `tsconfig` strict | `pnpm typecheck && pnpm lint && pnpm build` | — | todo |
-| 0.2 | Vitest (app + engine), Zod, `@supabase/ssr`, `@supabase/supabase-js`, `@upstash/ratelimit` + `@upstash/redis`; in `engine/`: `ml-pca` (k-means, silhouette e PRNG si scrivono a mano in E1). Font self-hosted via `next/font/local` | `package.json`, `engine/package.json` | un test d'esempio per pacchetto passa; nessuna richiesta a Google Fonts | `pnpm test`; grep `fonts.googleapis` = 0 | 0.1 | todo |
-| 0.3 | `supabase init` (via `pnpm dlx supabase`), cartelle `supabase/migrations`, `supabase/tests` con un test pgTAP banale; `.env.example` senza valori; `.gitignore` con `.env*` | `supabase/`, `.env.example` | struttura presente, nessun segreto tracciato | `git ls-files | grep -i env` mostra solo `.env.example` | 0.1 | todo |
-| 0.4 | GitHub Actions CI: job `app` (typecheck, lint, test, build) + job `db` (`supabase start`, `supabase db reset`, `supabase test db`) su PR e push | `.github/workflows/ci.yml` | entrambi i job verdi sulla PR di M0 | `gh run list --branch claude/m0-scaffold` | 0.2, 0.3 | todo |
-| 0.5 | Script `pnpm ai:map` → `.ai/mappa-codice.md` (file → export, rotte, tabelle da migrazioni, file grandi da non leggere) + `ai:check` in CI + `check:changed` (solo pacchetti toccati) + hook PostToolUse in `.claude/settings.json` che rigenera la mappa | `scripts/`, `.claude/settings.json`, `.ai/` | mappa generata e non vuota; `ai:check` fallisce se la mappa è vecchia | `pnpm ai:map && pnpm ai:check` | 0.1 | todo |
-| 0.6 | `src/AGENTS.md`, `supabase/AGENTS.md`, `engine/AGENTS.md` (1-3 KB, solo convenzioni dell'area) + sezione "Comandi" di `AGENTS.md` aggiornata con i comandi reali | `*/AGENTS.md` | ogni comando citato esiste in package.json | lettura + esecuzione dei comandi | 0.1-0.5 | todo |
+| 0.1 | Scaffold Next.js 16 (ultima stabile, versione dal package.json reale) + TS strict + Tailwind + ESLint, pnpm workspace con pacchetti root (app) e `engine/` | root, `src/app/` | `pnpm dev` serve `/` con titolo "Arengo"; `tsconfig` strict | `pnpm typecheck && pnpm lint && pnpm build` | — | doing |
+| 0.2 | Vitest (app + engine), Zod, `@supabase/ssr`, `@supabase/supabase-js`, `@upstash/ratelimit` + `@upstash/redis`; in `engine/`: `ml-pca` (k-means, silhouette e PRNG si scrivono a mano in E1). Font self-hosted via `next/font/local` | `package.json`, `engine/package.json` | un test d'esempio per pacchetto passa; nessuna richiesta a Google Fonts | `pnpm test`; grep `fonts.googleapis` = 0 | 0.1 | doing |
+| 0.3 | `supabase init` (via `pnpm dlx supabase`), cartelle `supabase/migrations`, `supabase/tests` con un test pgTAP banale; `.env.example` senza valori; `.gitignore` con `.env*` | `supabase/`, `.env.example` | struttura presente, nessun segreto tracciato | `git ls-files | grep -i env` mostra solo `.env.example` | 0.1 | doing |
+| 0.4 | GitHub Actions CI: job `app` (typecheck, lint, test, build) + job `db` (`supabase start`, `supabase db reset`, `supabase test db`) su PR e push | `.github/workflows/ci.yml` | entrambi i job verdi sulla PR di M0 | `gh run list --branch claude/m0-scaffold` | 0.2, 0.3 | doing |
+| 0.5 | Script `pnpm ai:map` → `.ai/mappa-codice.md` (file → export, rotte, tabelle da migrazioni, file grandi da non leggere) + `ai:check` in CI + `check:changed` (solo pacchetti toccati) + hook PostToolUse in `.claude/settings.json` che rigenera la mappa | `scripts/`, `.claude/settings.json`, `.ai/` | mappa generata e non vuota; `ai:check` fallisce se la mappa è vecchia | `pnpm ai:map && pnpm ai:check` | 0.1 | doing |
+| 0.6 | `src/AGENTS.md`, `supabase/AGENTS.md`, `engine/AGENTS.md` (1-3 KB, solo convenzioni dell'area) + sezione "Comandi" di `AGENTS.md` aggiornata con i comandi reali | `*/AGENTS.md` | ogni comando citato esiste in package.json | lettura + esecuzione dei comandi | 0.1-0.5 | doing |
 
 Richiede ok di Manuel: creazione repo GitHub pubblico `arengo`, creazione progetto Supabase `arengo-dev`, installazione dipendenze.
 
@@ -167,6 +167,13 @@ Unico stream parallelo: **E1** (solo `engine/src/core/`, `engine/test/`, `docs/A
 | 2026-10-13 | Turnstile su OTP | SMS pumping e costi | solo rate limit IP |
 | 2026-10-13 | Filtro (M2) prima di auth (M3) | il controllo handle usa il lessico | ordine originale |
 | 2026-10-13 | Soglie implicite del prompt portate in config | principio 7 | numeri nel codice |
+| 2026-10-13 | TypeScript 6.x (non 7) | typescript-eslint (usato da eslint-config-next) non supporta TS 7 | TS 7 con installazione side-by-side |
+| 2026-10-13 | Supabase CLI fissata a 2.120.0 (`pnpm dlx supabase@2.120.0` in locale, `supabase/setup-cli` in CI) | stessa versione locale/CI; setup-cli più veloce di dlx nel job | `latest` |
+| 2026-10-13 | Job CI `db` avvia solo Postgres + Auth (`-x` sugli altri servizi) | i test pgTAP non usano API/storage; job più veloce | stack completo |
+| 2026-10-13 | Font: Inter variable subset latin (woff2 + OFL in `src/app/fonts/`) | self-hosted, copre l'italiano, sostituibile in fase design | pacchetto `geist`, font di sistema |
+| 2026-10-13 | `CLAUDE.md` = `@AGENTS.md` anche in `src/`, `supabase/`, `engine/` | Claude Code carica in automatico solo i CLAUDE.md annidati (WORKFLOW §2) | solo AGENTS.md |
+| 2026-10-13 | `.gitattributes` con `eol=lf`; mappa senza timestamp | `ai:check` deterministico tra Windows e CI Linux | normalizzare solo nello script |
+| 2026-10-13 | Email autore git = noreply GitHub (config locale del repo) | repo pubblico: niente email personali nei commit | email personale |
 
 ## Candidati Skill (creare dopo 2 esecuzioni manuali)
 | Candidato | Trigger | Input | Output | Esecuzioni manuali |

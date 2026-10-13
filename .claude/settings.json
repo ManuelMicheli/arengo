@@ -28,5 +28,19 @@
       "Read(./.env)",
       "Read(./.env.local)"
     ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/scripts/ai-map.mjs\" --quiet || true",
+            "timeout": 30
+          }
+        ]
+      }
+    ]
   }
 }

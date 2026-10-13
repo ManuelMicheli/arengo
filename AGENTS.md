@@ -61,8 +61,17 @@ Le aree `src/`, `supabase/`, `engine/` hanno il proprio `AGENTS.md` (creato dall
 | brief per un sotto-agente | `.ai/brief-agente.md` |
 
 ## Comandi
-Definiti in M0 (aggiornare qui): `pnpm typecheck` · `pnpm lint` · `pnpm test` · `pnpm build` · `pnpm ai:map` · `pnpm check:changed`.
-DB: niente Docker locale. Test SQL/RLS girano in CI (`supabase start` + `supabase test db`); app su progetto Supabase dev remoto. Supabase CLI via `pnpm dlx supabase`.
+| Comando | Cosa fa |
+|---|---|
+| `pnpm dev` | server di sviluppo (http://localhost:3000) |
+| `pnpm typecheck` | `next typegen` + `tsc` app + typecheck `engine` |
+| `pnpm lint` | ESLint su tutto il repo |
+| `pnpm test` | Vitest app (`src/`, `scripts/`) + `engine` |
+| `pnpm --filter engine test` | solo test del motore |
+| `pnpm build` | build Next.js |
+| `pnpm ai:map` / `pnpm ai:check` | rigenera / verifica `.ai/mappa-codice.md` (hook PostToolUse la rigenera da solo) |
+| `pnpm check:changed` | typecheck+lint+test solo dei pacchetti toccati rispetto a main |
+DB: niente Docker locale. Test SQL/RLS girano solo nel job CI `db` (`supabase start` + `db reset` + `test db`); app su progetto Supabase dev remoto. Supabase CLI via `pnpm dlx supabase@2.120.0` (stessa versione della CI). TypeScript fermo a 6.x finché typescript-eslint non supporta TS 7.
 Windows/PowerShell: niente `&&` in PowerShell 5.1; per i comandi POSIX usare il tool Bash.
 
 ## Git

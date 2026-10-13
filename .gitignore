@@ -12,3 +12,6 @@ supabase/.temp/
 supabase/.branches/
 .claude/settings.local.json
 *.log
+
+next-env.d.ts
+*.tsbuildinfo
