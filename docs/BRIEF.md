@@ -33,7 +33,7 @@ Il dibattito politico online premia polarizzazione e engagement. Manca un luogo 
 - **Proposta ponte**: approvazione minima tra tutti i gruppi ≥ `bridging_threshold`, stabile per `bridging_stable_runs` run consecutive.
 - **Agenda**: documento versionato per tema: problemi, proposte ponte, migliori argomenti, disaccordi aperti.
 - **Curatore**: utente idoneo sorteggiato, mandato di `curator_term_months`; struttura, unisce doppioni, verifica fonti. NON può bloccare o nascondere contenuti.
-- **Giuria**: `jury_size` utenti di gruppi diversi (da panel pre-estratti) che decidono sulle segnalazioni di livello 2-3.
+- **Giuria**: `jury_size` utenti (da panel pre-estratti) da almeno min(`jury_min_buckets`, k) gruppi diversi, dove k è il numero di gruppi trovati dalla run; decidono sulle segnalazioni di livello 2-3. Nelle run senza gruppi (dati insufficienti) la giuria è estratta a caso tra gli idonei e marcata "senza garanzia di diversità" nel registro pubblico.
 
 ## Scala di severità (pubblica: filtro, giurie, sanzioni)
 - **0 Duro** — ammesso. Critica forte a idee, leggi, partiti.
