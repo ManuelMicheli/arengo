@@ -182,7 +182,63 @@ I passi restano quelli di M3 (maggiore età, regole + Scala, consenso art. 9); c
 
 ## 6. Schermate
 
-Formato: **obiettivo** · contenuto in ordine di importanza · **azione primaria** · stati · microcopy · gesto (Segnare, Contare, Cancellare, Sottolineare della moodboard).
+### 6.0 Regole di struttura (valgono per ogni schermata)
+
+Nate dal feedback di Manuel sulle prime 14 schermate ("sembra tutto uguale, non ci sono regole visive"). Qui stanno ruoli, gerarchie e comportamenti; valori esatti di font, colori e spaziature stanno in `docs/DESIGN.md`.
+
+**Tre livelli, uno solo dominante.** Ogni schermata ha:
+1. **un** elemento dominante (la domanda, il numero, il testo della persona o il titolo): è la prima cosa che l'occhio trova, grande e con aria intorno;
+2. il contenuto (testi delle persone in serif, nitidi, mai a matita);
+3. i meta (stato, conteggi, date) in sans piccolo.
+Se due elementi competono per il livello 1, uno scende o va in un'altra schermata.
+
+**Sei tipi di schermata, ognuno con uno schema fisso.** L'utente riconosce cosa deve fare dalla forma, prima di leggere.
+
+| Tipo | Schermate | Dominante | Azione primaria | Barra in basso |
+|---|---|---|---|---|
+| **Leggere** | Proposta, Problema, Agenda, pagine di trasparenza | il testo della persona (o "Agenda Casa v4") | in fondo, fissa sopra la tab bar | tab bar |
+| **Decidere** | Mazzo, Giuria, Segnalazione | la domanda ("Questo messaggio rispetta le regole?") con l'oggetto su un foglio | le scelte stesse, grandi; nel Mazzo il tocco vota subito, in Giuria e Segnalazione si conferma perché non si torna indietro | Mazzo: tab bar · Giuria e Segnalazione: nessuna (modalità concentrata) |
+| **Scrivere** | Nuovo problema, Nuova proposta, Argomento, Riformulazione | la domanda del passo ("Quanto costa e chi paga?") | "Avanti" / "Pubblica …" fisso sopra la tastiera | nessuna; in alto "Annulla · titolo · passo N di M" |
+| **Conversare** | Piazza, Bar | i messaggi (serif), più condivisi in alto | il campo di scrittura fisso in basso | tab bar sotto il campo |
+| **Risultato** | Stanotte, Fine mazzo, problema aperto, proposta pubblicata | una frase o un numero molto grande ("Stanotte 3 proposte sono passate a penna.") | una sola, poi la schermata finisce | tab bar |
+| **Sistema** | Account, Cosa sappiamo di te, Regole, Sanzione, Config | il titolo | nessuna dominante; righe etichetta + spiegazione; azioni distruttive in fondo, colore gomma, con conferma | tab bar |
+
+**Un momento per sezione.** Ogni area ha un solo gesto che la rende riconoscibile, e un solo segno a mano per schermata:
+
+| Sezione | Momento distintivo |
+|---|---|
+| Vota | la croce che si disegna nella casella, la carta che scivola via e lascia la successiva |
+| Stanotte | il numero cerchiato a matita e il timbro "a penna" |
+| Problema | la lavagna delle tacche che si riempie |
+| Proposta | le barre evidenziatore che si stendono una alla volta al primo ingresso |
+| Agenda | il numero di versione gigante; chi entra va a inchiostro, chi esce viene barrato a matita |
+| Scrivere | la parola che giudica sottolineata a matita, come un professore |
+| Filtro | la gomma |
+| Piazza / Bar | la testata illustrata (portici / tavolino del bar); il Bar ha carta e tono più rilassati |
+| Giuria | il biglietto del sorteggio; per il resto nessuna decorazione |
+| Quaderno | la copertina disegnata dai temi seguiti (grigio neutro, mai colori di gruppo) |
+
+**Leggibilità e accessibilità (minimi non negoziabili).**
+- Corpo testo ≥ 16 px; testi delle persone ≥ 18 px su mobile; meta mai sotto 12 px.
+- Contrasto AA (4,5:1 per il testo normale, 3:1 per il testo grande). La grafite HB (`#8B8B91` su carta) non lo raggiunge: solo decorazioni e stati disabilitati, **mai testo da leggere**; per i meta si usa almeno la 2B.
+- Aree tattili ≥ 44 × 44 px; le caselle di voto più grandi.
+- Righe di testo ≤ 70 caratteri su desktop (colonna di lettura stretta anche su schermi larghi).
+- Numeri con cifre tabulari; percentuali sempre accanto alla barra, mai solo colore (daltonismo).
+- Focus visibile da tastiera su ogni elemento interattivo; ordine di tabulazione uguale all'ordine visivo.
+- Tutto il movimento rispetta `prefers-reduced-motion`; nessuna informazione affidata solo all'animazione.
+- Maiuscola solo a inizio frase, ovunque (pulsanti, titoli, tab).
+
+**Barra in alto, sempre uguale.** Sinistra: indietro con il nome del luogo da cui vieni ("‹ Casa"). Centro: contesto breve. Destra: al massimo un'azione (cerca o campana). Sulle quattro schermate principali niente "indietro", solo il titolo del luogo.
+
+**Moduli.** Una domanda per schermata; tastiera del tipo giusto (numerica per OTP); etichetta sempre visibile, mai solo segnaposto; contatore caratteri che diventa evidente solo vicino al limite; errori sotto il campo, scritti come "cosa fare"; bozza tenuta nel browser.
+
+**Stati obbligatori per ogni schermata.** Prima di disegnarla o costruirla si definiscono: vuoto · caricamento (righe di grafite al posto del contenuto, niente spinner) · errore · successo · sotto soglia · ospite (foglio "entra per …" al primo gesto) · sospeso o pausa di scrittura. Una schermata senza tutti gli stati non è finita.
+
+**Desktop.** La tab bar diventa una barra in alto con gli stessi quattro luoghi. Leggere e Scrivere restano a colonna singola; Agenda e Proposta possono affiancare testo e consenso; la Piazza può mostrare il thread aperto accanto all'elenco.
+
+---
+
+Formato delle schede seguenti: **obiettivo** · contenuto in ordine di importanza · **azione primaria** · stati · microcopy · gesto (Segnare, Contare, Cancellare, Sottolineare della moodboard).
 
 ### 6.1 Stanotte (home utente al mattino) [delta]
 - **Obiettivo**: in 30 secondi sapere cosa è cambiato.
@@ -228,7 +284,7 @@ Formato: **obiettivo** · contenuto in ordine di importanza · **azione primaria
 ### 6.7 Piazza
 - Contenuto: due liste, **Più condivisi** (bridging) e **Nuovi** (ultime {piazza_new_window_hours} ore non ancora valutati). Thread a 2 livelli. Handle visibile, nessun contatore sulle persone.
 - Voto messaggio: d'accordo / contrario / passo (alimenta il motore: va detto).
-- **Slow mode**: banner con motivo e conto alla rovescia personale: "Discussione molto animata: un messaggio ogni {slowmode_user_interval_min} minuti. Prossimo tra 3:12."
+- **Slow mode**: banner con motivo e attesa in minuti, senza secondi che scorrono: "Discussione molto animata: un messaggio ogni {slowmode_user_interval_min} minuti. Puoi scrivere di nuovo tra 4 minuti."
 - Messaggio promuovibile: segno a margine "questo messaggio piace a gruppi diversi: può diventare una proposta".
 - Gesto: Cancellare (filtro all'invio).
 
@@ -280,9 +336,9 @@ Formato: **obiettivo** · contenuto in ordine di importanza · **azione primaria
 |---|---|
 | Voto | la croce si disegna nella casella (gesto Segnare); cambiare voto cancella e ridisegna |
 | Sostegno | una tacca in più alla lavagna; al raggiungimento soglia: "Si è aperto. Ora si possono proporre soluzioni." |
-| Filtro | la gomma cancella davanti all'utente, spiega la regola, "Questa frase non è stata pubblicata né salvata." Il testo resta nel campo per riformulare |
+| Filtro | la gomma cancella davanti all'utente, spiega la regola, "Questa frase non è stata pubblicata né salvata." Il testo resta nel campo, solo nel browser, per riformularlo senza riscrivere tutto: il server non lo conserva né lo logga (principio 9). Svuotare il campo punirebbe chi ha sbagliato una parola in un argomento lungo |
 | Pausa di scrittura | "Hai ricevuto troppi blocchi gravi di fila. Puoi riscrivere tra {filter_pause_minutes} minuti." Nessun dettaglio salvato, e lo diciamo |
-| Slow mode | conto alla rovescia, non errore |
+| Slow mode | attesa in minuti, con calma: non è un errore |
 | Errore di rete o limite | sempre "cosa è successo" + "cosa fare ora"; mai codici |
 | Passaggio a penna | animazione una tantum (matita → inchiostro) quando una proposta che hai visto passa a penna |
 | Movimento ridotto | tutte le animazioni rispettano `prefers-reduced-motion` |
@@ -362,6 +418,21 @@ Legenda: ✓ coerente · ⚠ coerente con la condizione indicata.
 | "Puoi cambiarla fino alla run di stanotte" | il voto si cambia sempre, la run fotografa | "puoi cambiarlo quando vuoi: stanotte contiamo quello che c'è" |
 | evidenziatori "Gruppo A…E" | rischio di associare utente e gruppo (principio 2) | mai "il tuo gruppo"; legenda "i colori si assegnano ai gruppi in ordine e ripartono a ogni run: non dicono chi sei"; copertina del Quaderno in grigio neutro |
 | "altre 6 e per oggi hai finito", Quaderno con temi | funzioni non previste | proposte come delta (§10) |
+
+Seconda verifica, sulle 14 schermate (`C:\dev\arengo-design\schermate.html`, 2026-10-15):
+
+| Schermata | Problema | Correzione |
+|---|---|---|
+| Proposta: "Evidenziata da 4 gruppi su 5" con un gruppo al 52% | errore di concetto: ponte = **tutti** i gruppi a quota sopra {bridging_threshold}; con un gruppo sotto non è evidenziata | "A matita · manca un gruppo": barre degli altri piene, quella sotto soglia in evidenza, "il gruppo più freddo è al 52%" |
+| Giuria: radio con i livelli 0-4 | il giurato non sceglie il livello: decide se il contenuto viola il livello segnalato (M7) | livello segnalato in alto con l'esempio della Scala; scelte "Viola / Non viola / Mi astengo" |
+| Giuria: "livello 2: il messaggio si nasconde" | per M7 "viola" → rimozione **e** sanzione graduata (prima un avviso), per livello 2 e 3; il livello 4 va agli admin già alla segnalazione | descrivere l'esito, non il livello: "Se viola: il messaggio viene rimosso e l'autore riceve una sanzione, a partire da un avviso." |
+| Giuria: "uno di 7 giurati" | numero fisso e sbagliato (`jury_size` oggi 5) | "uno di {jury_size} giurati" |
+| Giuria: "Nessuno vede la tua scelta" | promessa non garantita dalla spec | "La tua scelta non è pubblica: il registro mostra solo l'esito." |
+| Bar: "si cancellano dopo 7 giorni" | numero fisso e sbagliato (`bar_retention_days` oggi 60) | "dopo {bar_retention_days} giorni" |
+| Cosa sappiamo di te: "Quello che scrivi: pubblico, senza il tuo nome" | in Piazza e Bar l'handle si vede (`piazza_public`, `bar_public`) | "Problemi, proposte e argomenti: senza nome. Piazza e Bar: con il tuo handle, mai con il numero." |
+| Cosa sappiamo di te: voti "con uno pseudonimo" | manca il limite dichiarato (§8) | aggiungere: "Chi gestisce i server con le chiavi potrebbe tecnicamente ricollegarli: per questo lo scriviamo." |
+| Piazza: messaggi senza handle | la spec mostra l'handle in Piazza e Bar | tenere l'handle (piccolo, sans), nessun contatore accanto. Toglierlo è una scelta di prodotto di Manuel |
+| Filtro: campo svuotato | punisce chi riformula; il principio 9 riguarda server e log, non il campo nel browser | testo lasciato nel campo (§7.1) |
 
 ### 9.4 Rischi d'esperienza da presidiare
 - **Freddezza iniziale**: con pochi utenti le run sono `insufficient` per settimane. Mitigazione: stati vuoti che mostrano l'avanzamento verso {min_participants_for_clustering}, beta con gruppo chiuso, temi iniziali pochi (3-5) per concentrare i voti.

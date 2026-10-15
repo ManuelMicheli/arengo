@@ -115,6 +115,7 @@ Generata da `pnpm ai:map`: non modificare a mano. Consultare solo con Grep.
 ## File grandi (non leggere interi: Grep o Read con offset/limit)
 
 - LICENSE
+- docs/ESPERIENZA.md
 - docs/PLAN.md
 - pnpm-lock.yaml
 - src/types/database.ts
