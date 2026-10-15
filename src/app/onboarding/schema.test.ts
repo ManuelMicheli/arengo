@@ -22,3 +22,15 @@ describe("onboardingSchema", () => {
     }
   });
 });
+
+describe("handle riservati", () => {
+  it("rifiuta nomi che imitano la gestione", () => {
+    for (const handle of ["admin", "Admin_1", "arengo_staff", "Moderatore", "staff99"]) {
+      expect(onboardingSchema.safeParse({ ...base, handle }).success).toBe(false);
+    }
+  });
+
+  it("accetta nomi comuni", () => {
+    expect(onboardingSchema.safeParse({ ...base, handle: "giulia_92" }).success).toBe(true);
+  });
+});

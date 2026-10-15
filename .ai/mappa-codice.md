@@ -83,7 +83,7 @@ Generata da `pnpm ai:map`: non modificare a mano. Consultare solo con Grep.
 - src/app/onboarding/onboarding-form.tsx: OnboardingForm
 - src/app/onboarding/page.tsx: OnboardingPage, metadata
 - src/app/onboarding/schema.test.ts
-- src/app/onboarding/schema.ts: onboardingSchema
+- src/app/onboarding/schema.ts: isReservedHandle, onboardingSchema
 - src/app/page.tsx: Home
 - src/app/privacy/page.tsx: PrivacyPage, metadata
 - src/components/legal-text.tsx: LegalText
@@ -103,7 +103,7 @@ Generata da `pnpm ai:map`: non modificare a mano. Consultare solo con Grep.
 - src/lib/phone.test.ts
 - src/lib/phone.ts: otpCodeSchema, phoneSchema
 - src/lib/rate-limit.test.ts
-- src/lib/rate-limit.ts: LimitStore, OtpLimits, allowOtpRequest, getLimitStore, memoryStore, otpLimitsSchema, phoneKey
+- src/lib/rate-limit.ts: LimitStore, OtpLimits, allowOtpRequest, getLimitStore, isNonProductionEnv, memoryStore, otpLimitsSchema, phoneKey
 - src/lib/request-ip.ts: clientIp
 - src/lib/secret-guard.ts: assertAppSecret
 - src/lib/supabase/env.ts: publicSupabaseEnv, secretSupabaseKey

@@ -121,6 +121,8 @@ begin
 
   return jsonb_build_object(
     'exported_at', now(),
+    -- Strike del filtro attivi: solo il numero (la tabella contiene solo utente e ora, mai testo).
+    'filter_strikes_24h', (select count(*) from private.filter_strikes s where s.user_id = v_uid),
     'profile', jsonb_build_object(
       'handle', v_profile.handle, 'status', v_profile.status, 'suspended_until', v_profile.suspended_until,
       'rules_version_accepted', v_profile.rules_version_accepted, 'consent_art9_at', v_profile.consent_art9_at,

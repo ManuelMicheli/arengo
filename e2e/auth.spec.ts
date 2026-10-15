@@ -31,7 +31,7 @@ test("onboarding: conferme obbligatorie, poi export e cancellazione", async ({ p
   await page.getByRole("checkbox", { name: /almeno 18 anni/ }).check();
   await page.getByRole("checkbox", { name: /accetto le regole/ }).check();
   await page.getByRole("button", { name: "Completa la registrazione" }).click();
-  await expect(page.getByRole("alert")).toContainText("consenso art. 9");
+  await expect(page.locator("main [role=alert]")).toContainText("consenso art. 9");
 
   await page.getByRole("checkbox", { name: /Acconsento/ }).check();
   await page.getByRole("button", { name: "Completa la registrazione" }).click();
@@ -60,10 +60,10 @@ test("oltre il limite di richieste OTP per IP → 429", async ({ page }) => {
   for (let i = 0; i < 10 && status !== "429"; i++) {
     await page.getByLabel("Numero di cellulare").fill(`33300000${10 + i}`);
     await page.getByRole("button", { name: "Invia il codice" }).click();
-    const alert = page.getByRole("alert");
+    const alert = page.locator("main [role=alert]");
     await expect(alert).toBeVisible();
     status = await alert.getAttribute("data-status");
   }
   expect(status).toBe("429");
-  await expect(page.getByRole("alert")).toContainText("Troppe richieste");
+  await expect(page.locator("main [role=alert]")).toContainText("Troppe richieste");
 });

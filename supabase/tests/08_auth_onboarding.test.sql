@@ -2,7 +2,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(38);
+select plan(39);
 
 insert into auth.users (id, email) values
   ('31111111-1111-1111-1111-111111111111', 'nuovo@test.local'),
@@ -94,6 +94,7 @@ select is(jsonb_array_length(public.export_my_data() #> '{votes,proposal_votes}'
 select is((public.export_my_data() #>> '{votes,proposal_votes,0,value}'), '1', 'export: valore del proprio voto');
 select is(jsonb_array_length(public.export_my_data() -> 'piazza_messages'), 1, 'export: propri messaggi');
 select ok(public.export_my_data()::text not like '%32222222%', 'export: nessun id di altri utenti');
+select is((public.export_my_data() ->> 'filter_strikes_24h')::integer, 0, 'export: numero di strike del filtro');
 reset role;
 
 -- ---- Cancellazione (mode di default: anonymize) ----

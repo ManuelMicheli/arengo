@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { allowOtpRequest, memoryStore, phoneKey } from "./rate-limit";
+import { allowOtpRequest, getLimitStore, memoryStore, phoneKey } from "./rate-limit";
 
 const limits = { per_ip: 3, per_phone: 2, window_minutes: 15 };
 const env = { RATE_LIMIT_KEY_SECRET: "test" };
@@ -37,7 +37,12 @@ describe("allowOtpRequest", () => {
     expect(phoneKey("+393331234567", env)).not.toContain("3331234567");
   });
 
-  it("in produzione senza segreto per le chiavi rifiuta", () => {
-    expect(() => phoneKey("+393331234567", { VERCEL_ENV: "production" })).toThrow("rate_limit_secret_missing");
+  it("con NODE_ENV=production senza segreto per le chiavi rifiuta (fail-closed anche fuori Vercel)", () => {
+    expect(() => phoneKey("+393331234567", { NODE_ENV: "production" })).toThrow("rate_limit_secret_missing");
+    expect(() => phoneKey("+393331234567", { NODE_ENV: "production", ARENGO_ENV: "ci" })).not.toThrow();
+  });
+
+  it("con NODE_ENV=production senza Upstash rifiuta il contatore in memoria", () => {
+    expect(() => getLimitStore({ NODE_ENV: "production" })).toThrow("rate_limit_store_missing");
   });
 });

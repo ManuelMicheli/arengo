@@ -1,12 +1,18 @@
 // Rate limit delle richieste OTP per IP e per numero (soglie da platform_config.otp_rate_limits).
 // Su Redis il numero non va mai in chiaro: chiave = HMAC(numero, RATE_LIMIT_KEY_SECRET).
-// Senza Upstash si usa un contatore in memoria, ammesso solo fuori produzione.
+// Senza Upstash si usa un contatore in memoria, ammesso solo in sviluppo o CI (fail-closed altrove).
 
 import { createHmac } from "node:crypto";
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 import { z } from "zod";
-import { isProductionEnv } from "../../engine/src/guard/secret-guard";
+
+type Env = Readonly<Record<string, string | undefined>>;
+
+/** Sviluppo locale (`next dev`/test) o CI esplicita: gli unici ambienti con fallback non sicuri ammessi. */
+export function isNonProductionEnv(env: Env): boolean {
+  return env.NODE_ENV !== "production" || env.ARENGO_ENV === "development" || env.ARENGO_ENV === "ci";
+}
 
 export const otpLimitsSchema = z.object({
   per_ip: z.number().int().positive(),
@@ -57,17 +63,17 @@ export function getLimitStore(env: Readonly<Record<string, string | undefined>> 
   const token = env.UPSTASH_REDIS_REST_TOKEN;
   if (url && token) {
     defaultStore = upstashStore(new Redis({ url, token }));
-  } else if (isProductionEnv(env)) {
-    throw new Error("rate_limit_store_missing");
-  } else {
+  } else if (isNonProductionEnv(env)) {
     defaultStore = memoryStore();
+  } else {
+    throw new Error("rate_limit_store_missing");
   }
   return defaultStore;
 }
 
 export function phoneKey(phone: string, env: Readonly<Record<string, string | undefined>> = process.env): string {
   const secret = env.RATE_LIMIT_KEY_SECRET;
-  if (!secret && isProductionEnv(env)) throw new Error("rate_limit_secret_missing");
+  if (!secret && !isNonProductionEnv(env)) throw new Error("rate_limit_secret_missing");
   return createHmac("sha256", secret ?? "solo-sviluppo").update(phone).digest("hex");
 }
 
