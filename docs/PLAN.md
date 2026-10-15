@@ -83,11 +83,11 @@ Specifica: Supabase Auth phone OTP (provider SMS da env; in dev numeri di test) 
 
 | # | Task | Possiede | Accettazione | Verifica | Dipende | Stato |
 |---|---|---|---|---|---|---|
-| 3.1 | Login OTP + Turnstile + rate limit | `src/app/(auth)/`, `src/lib/` | login con numero di test; superato il limite → 429 | Playwright (solo CI, job `e2e`) + Vitest | M2 | doing |
-| 3.2 | Onboarding 3 passi + handle + testi legali | `src/app/onboarding/`, `content/legal/` | scrittura negata finché incompleto | pgTAP + Playwright | 3.1 | doing |
-| 3.3 | Sospensioni (scadenza automatica) | `supabase/`, `src/` | utente sospeso → scrittura negata; dopo suspended_until → consentita | pgTAP | 3.2 | doing |
-| 3.4 | Export e cancellazione account | `src/app/account/`, `supabase/` | dopo cancellazione: zero righe con il suo pseudo; contenuti pubblici anonimizzati | pgTAP + Vitest | 3.2 | doing |
-| 3.5 | Guardia segreto di test: app e motore rifiutano di partire in produzione se `vote_pseudo_secret` è il valore di test di `seed.sql` | `src/lib/`, `engine/src/` | avvio in produzione col segreto di test → errore esplicito | Vitest | 3.1 | doing |
+| 3.1 | Login OTP + Turnstile + rate limit | `src/app/(auth)/`, `src/lib/` | login con numero di test; superato il limite → 429 | Playwright (solo CI, job `e2e`) + Vitest | M2 | verified |
+| 3.2 | Onboarding 3 passi + handle + testi legali | `src/app/onboarding/`, `content/legal/` | scrittura negata finché incompleto | pgTAP + Playwright | 3.1 | verified |
+| 3.3 | Sospensioni (scadenza automatica) | `supabase/`, `src/` | utente sospeso → scrittura negata; dopo suspended_until → consentita | pgTAP | 3.2 | verified |
+| 3.4 | Export e cancellazione account | `src/app/account/`, `supabase/` | dopo cancellazione: zero righe con il suo pseudo; contenuti pubblici anonimizzati | pgTAP + Vitest | 3.2 | verified |
+| 3.5 | Guardia segreto di test: app e motore rifiutano di partire in produzione se `vote_pseudo_secret` è il valore di test di `seed.sql` | `src/lib/`, `engine/src/` | avvio in produzione col segreto di test → errore esplicito | Vitest | 3.1 | verified |
 
 ### M4 — Contenuti core
 Specifica: **Ogni RPC/insert di scrittura chiama `private.assert_can_write(content_type)` (onboarding, stato, pausa del filtro) e il testo passa da `guardContent` (`src/lib/moderation/`).** Server Action → Zod → rate limit (config) → `checkContent` → RPC/insert. Problemi con checklist di formulazione neutra; `pending` → `active` a problem_support_threshold sostegni. Riformulazioni votabili, accettate se superano il testo attuale con ≥ reformulation_min_votes; storico visibile. Schede: fatto + fonte obbligatoria, tipo fonte mostrato, approvazione curatori (permesso in M8; qui stato `proposed`). Proposte solo su problemi attivi, campi obbligatori tranne esempio estero, autore mai mostrato. Voto d'accordo/contrario/passo modificabile; ordine proposte casuale per utente (seed di sessione). Argomenti pro/contro, "utile/non utile", ordinati per cross_utility (prima della run: ordine casuale). Ricerca full-text Postgres config `italian` su problemi, schede, proposte (Agenda aggiunta in M9). Pagine funzionali grezze.
