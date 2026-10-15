@@ -41,7 +41,8 @@ export async function proposeReformulation(_prev: WriteState, form: FormData): P
     rpc: (service, userId, d) =>
       service.rpc("propose_reformulation", { user_id: userId, problem_id: d.problem_id, title: d.title, body: d.body }),
   });
-  if (result.ok) redirect(`/problemi/${String(form.get("problem_id"))}#riformulazioni`);
+  const problemId = id.safeParse(form.get("problem_id"));
+  if (result.ok && problemId.success) redirect(`/problemi/${problemId.data}#riformulazioni`);
   return result;
 }
 

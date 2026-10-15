@@ -55,7 +55,8 @@ test("proposta: voto modificabile, argomento e valutazione", async ({ page }) =>
   await enterCode(page, PHONE);
   await expect(page).toHaveURL(new RegExp(`/proposte/${E2E.proposalB}$`));
 
-  await expect(page.getByRole("button", { name: "Passo" })).toHaveAttribute("aria-pressed", "true");
+  // Votata nel mazzo (l'ordine del mazzo è casuale: non sappiamo con quale scelta): il voto risulta registrato.
+  await expect(page.getByRole("group", { name: "Il tuo voto" }).locator('[aria-pressed="true"]')).toHaveCount(1);
   await page.getByRole("button", { name: "Contrario" }).click();
   await expect(page.getByRole("button", { name: "Contrario" })).toHaveAttribute("aria-pressed", "true");
   await expect(page.getByText("Nessuno vede come hai votato: contano solo i totali.")).toBeVisible();

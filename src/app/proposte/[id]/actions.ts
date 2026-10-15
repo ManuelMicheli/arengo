@@ -41,6 +41,7 @@ export async function createArgument(_prev: WriteState, form: FormData): Promise
     rpc: (service, userId, d) =>
       service.rpc("create_argument", { user_id: userId, proposal_id: d.proposal_id, side: d.side, body: d.body }),
   });
-  if (result.ok) revalidatePath(`/proposte/${String(form.get("proposal_id"))}`);
+  const proposalId = z.uuid().safeParse(form.get("proposal_id"));
+  if (result.ok && proposalId.success) revalidatePath(`/proposte/${proposalId.data}`);
   return result;
 }

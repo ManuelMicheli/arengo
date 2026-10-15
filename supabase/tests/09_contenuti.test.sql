@@ -3,7 +3,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(52);
+select plan(57);
 
 insert into auth.users (id, email) values
   ('c1111111-1111-1111-1111-111111111111', 'c1@test.local'),
@@ -150,12 +150,14 @@ reset role;
 -- ---- Temi seguiti: solo il proprietario ----
 select set_config('request.jwt.claims', '{"sub":"c1111111-1111-1111-1111-111111111111","role":"authenticated"}', true);
 set local role authenticated;
-select lives_ok($$insert into public.topic_follows (user_id, topic_id) values ('c1111111-1111-1111-1111-111111111111', 'd0000000-0000-0000-0000-000000000001')$$,
-  'segue un tema');
+select lives_ok($$select public.follow_topic('d0000000-0000-0000-0000-000000000001', true)$$, 'segue un tema');
 select set_config('request.jwt.claims', '{"sub":"c2222222-2222-2222-2222-222222222222","role":"authenticated"}', true);
 select is((select count(*)::integer from public.topic_follows), 0, 'non vede i temi seguiti da altri');
 select throws_ok($$insert into public.topic_follows (user_id, topic_id) values ('c1111111-1111-1111-1111-111111111111', 'd0000000-0000-0000-0000-000000000001')$$,
-  '42501', null, 'non può aggiungere temi a un altro utente');
+  '42501', null, 'nessun insert diretto, nemmeno per altri utenti');
+select set_config('request.jwt.claims', '{"sub":"c4444444-4444-4444-4444-444444444444","role":"authenticated"}', true);
+select throws_ok($$select public.follow_topic('d0000000-0000-0000-0000-000000000001', true)$$, 'P0001', 'onboarding_incomplete',
+  'senza onboarding non segue temi');
 
 -- ---- Mazzo del giorno ----
 select set_config('request.jwt.claims', '{"sub":"c1111111-1111-1111-1111-111111111111","role":"authenticated"}', true);
@@ -172,6 +174,28 @@ select lives_ok($$select public.delete_account('c1111111-1111-1111-1111-11111111
 reset role;
 select is((select count(*)::integer from public.topic_follows where user_id = 'c1111111-1111-1111-1111-111111111111'), 0,
   'temi seguiti eliminati');
+select set_config('request.jwt.claims', '{"sub":"c1111111-1111-1111-1111-111111111111","role":"authenticated"}', true);
+set local role authenticated;
+select throws_ok($$select public.follow_topic('d0000000-0000-0000-0000-000000000001', true)$$, 'P0001', 'account_deleted',
+  'account cancellato con sessione ancora valida: non può seguire temi');
+reset role;
+
+-- ---- Fonti: visibili solo con una scheda approvata ----
+select set_config('request.jwt.claims', '{"role":"anon"}', true);
+set local role anon;
+select is((select count(*)::integer from public.sources where url = 'https://istat.it'), 0, 'fonte di una scheda in attesa invisibile');
+reset role;
+update public.problem_facts set status = 'approved' where statement = 'Zebrafatto unico';
+set local role anon;
+select is((select count(*)::integer from public.sources where url = 'https://istat.it'), 1, 'fonte visibile dopo l''approvazione');
+reset role;
+
+-- ---- Storico: sparisce con il problema rimosso ----
+update public.problems set status = 'removed' where id = 'd0000000-0000-0000-0000-000000000011';
+set local role anon;
+select is((select count(*)::integer from public.problem_revisions where problem_id = 'd0000000-0000-0000-0000-000000000011'), 0,
+  'versioni precedenti di un problema rimosso invisibili');
+reset role;
 
 -- ---- Pausa di scrittura del filtro ----
 insert into private.filter_strikes (user_id) select 'c3333333-3333-3333-3333-333333333333' from generate_series(1, 3);

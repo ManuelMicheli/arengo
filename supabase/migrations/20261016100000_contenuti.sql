@@ -85,10 +85,11 @@ $$;
 revoke execute on function private.assert_can_write_user(uuid, text) from public, anon, authenticated;
 
 -- Limite giornaliero (giorno Europe/Rome) da platform_config.rate_limits.<kind>.
+-- Lock per utente e tipo fino a fine transazione: richieste parallele non superano il limite.
 create or replace function private.assert_daily_limit(uid uuid, kind text)
 returns void
 language plpgsql
-stable
+volatile
 security definer
 set search_path = ''
 as $$
@@ -102,6 +103,7 @@ begin
   if v_limit is null then
     raise exception 'config_missing';
   end if;
+  perform pg_catalog.pg_advisory_xact_lock(pg_catalog.hashtext('arengo_daily:' || assert_daily_limit.uid::text || ':' || assert_daily_limit.kind));
   case assert_daily_limit.kind
     when 'problems' then
       select count(*) into v_count from public.problems t
@@ -387,7 +389,16 @@ create index problem_revisions_problem_idx on public.problem_revisions (problem_
 create index problem_revisions_reformulation_idx on public.problem_revisions (reformulation_id);
 alter table public.problem_revisions enable row level security;
 grant select on public.problem_revisions to anon, authenticated;
-create policy problem_revisions_read on public.problem_revisions for select to anon, authenticated using (true);
+-- Le versioni precedenti seguono il problema: se è rimosso, spariscono anche loro.
+create policy problem_revisions_read on public.problem_revisions for select to anon, authenticated
+  using (exists (select 1 from public.problems p where p.id = problem_id and p.status <> 'removed'));
+
+-- Fonti: leggibili solo se collegate a una scheda approvata o a una proposta non rimossa
+-- (prima erano tutte pubbliche, anche quelle di schede in attesa dei curatori).
+drop policy sources_read on public.sources;
+create policy sources_read on public.sources for select to anon, authenticated using (
+  exists (select 1 from public.problem_facts f where f.source_id = sources.id and f.status = 'approved')
+  or exists (select 1 from public.proposals pr where pr.foreign_source_id = sources.id and pr.status <> 'removed'));
 
 -- Accetta se la riformulazione ha almeno reformulation_min_votes voti e più "preferisco la riformulazione"
 -- che "preferisco il testo attuale". Le altre aperte dello stesso problema si chiudono: erano votate sul testo vecchio.
@@ -478,7 +489,9 @@ begin
       if cast_vote.value not in (-1, 1) then
         raise exception 'invalid_value';
       end if;
-      perform 1 from public.problem_reformulations r where r.id = cast_vote.item_id and r.status = 'open';
+      perform 1 from public.problem_reformulations r
+      join public.problems p on p.id = r.problem_id and p.status in ('pending', 'active')
+      where r.id = cast_vote.item_id and r.status = 'open';
       if not found then
         raise exception 'item_not_votable';
       end if;
@@ -576,10 +589,14 @@ begin
     from public.problems p where p.fts @@ v_q and p.status <> 'removed'
     union all
     select 'fact', f.id, f.problem_id, f.statement, ts_rank(f.fts, v_q)
-    from public.problem_facts f where f.fts @@ v_q and f.status = 'approved'
+    from public.problem_facts f
+    join public.problems fp on fp.id = f.problem_id and fp.status <> 'removed'
+    where f.fts @@ v_q and f.status = 'approved'
     union all
     select 'proposal', pr.id, pr.problem_id, pr.what, ts_rank(pr.fts, v_q)
-    from public.proposals pr where pr.fts @@ v_q and pr.status <> 'removed'
+    from public.proposals pr
+    join public.problems pp on pp.id = pr.problem_id and pp.status <> 'removed'
+    where pr.fts @@ v_q and pr.status <> 'removed'
   ) r
   order by r.rank desc, r.id
   limit 50;
@@ -599,13 +616,38 @@ create table public.topic_follows (
 );
 create index topic_follows_topic_idx on public.topic_follows (topic_id);
 alter table public.topic_follows enable row level security;
-grant select, insert, delete on public.topic_follows to authenticated;
+-- Lettura diretta solo dei propri; scrittura solo via follow_topic (onboarding e stato verificati).
+grant select on public.topic_follows to authenticated;
 create policy topic_follows_own_read on public.topic_follows for select to authenticated
   using (user_id = (select auth.uid()));
-create policy topic_follows_own_insert on public.topic_follows for insert to authenticated
-  with check (user_id = (select auth.uid()));
-create policy topic_follows_own_delete on public.topic_follows for delete to authenticated
-  using (user_id = (select auth.uid()));
+
+create or replace function public.follow_topic(topic_id uuid, follow boolean)
+returns void
+language plpgsql
+volatile
+security definer
+set search_path = ''
+as $$
+declare
+  v_uid uuid := private.assert_can_vote();
+begin
+  if follow_topic.follow is null then
+    raise exception 'invalid_value';
+  end if;
+  if follow_topic.follow then
+    perform 1 from public.topics t where t.id = follow_topic.topic_id and t.is_active;
+    if not found then
+      raise exception 'unknown_topic';
+    end if;
+    insert into public.topic_follows (user_id, topic_id) values (v_uid, follow_topic.topic_id)
+    on conflict on constraint topic_follows_pkey do nothing;
+  else
+    delete from public.topic_follows f where f.user_id = v_uid and f.topic_id = follow_topic.topic_id;
+  end if;
+end;
+$$;
+revoke execute on function public.follow_topic(uuid, boolean) from public, anon, authenticated;
+grant execute on function public.follow_topic(uuid, boolean) to authenticated;
 
 create or replace function public.export_my_data()
 returns jsonb
@@ -746,7 +788,7 @@ grant execute on function public.delete_account(uuid) to service_role;
 
 -- ---------------------------------------------------------------------------
 -- 9. Mazzo del giorno (D4): proposte aperte su problemi attivi dei temi seguiti (tutti se nessuno),
--- non ancora votate; prima quelle sotto min_votes_item, poi ordine casuale stabile per utente e giorno.
+-- non ancora votate, in ordine casuale stabile per utente e giorno.
 -- Restituisce solo campi pubblici e nessun conteggio.
 -- ---------------------------------------------------------------------------
 create or replace function public.daily_deck()
@@ -760,13 +802,11 @@ declare
   v_uid uuid := private.assert_can_vote();
   v_pseudo text := private.pseudo(v_uid);
   v_size integer;
-  v_min integer;
   v_day text := (now() at time zone 'Europe/Rome')::date::text;
   v_follows boolean;
 begin
   select (c.value #>> '{}')::integer into v_size from public.platform_config c where c.key = 'daily_deck_size';
-  select (c.value #>> '{}')::integer into v_min from public.platform_config c where c.key = 'min_votes_item';
-  if v_size is null or v_min is null then
+  if v_size is null then
     raise exception 'config_missing';
   end if;
   select exists (select 1 from public.topic_follows f where f.user_id = v_uid) into v_follows;
@@ -779,9 +819,8 @@ begin
   where pr.status = 'open'
     and (not v_follows or exists (select 1 from public.topic_follows f where f.user_id = v_uid and f.topic_id = tp.id))
     and not exists (select 1 from public.proposal_votes v where v.proposal_id = pr.id and v.voter_pseudo = v_pseudo)
-  order by
-    ((select count(*) from public.proposal_votes v where v.proposal_id = pr.id) >= v_min),
-    md5(v_pseudo || v_day || pr.id::text)
+  -- Solo ordine casuale stabile: dare priorità a quelle sotto soglia renderebbe osservabile chi ha pochi voti.
+  order by md5(v_pseudo || v_day || pr.id::text)
   limit v_size;
 end;
 $$;
