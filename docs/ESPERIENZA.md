@@ -75,7 +75,7 @@ Non prendiamo: countdown ansiosi, "non perderti".
 
 ### 3.2 Il mazzo del giorno — *Duolingo (lezione finita), Tinder (una carta alla volta)*
 "Vota" è una pila di N proposte (`daily_deck_size` **[delta]**) dai temi che segui, in ordine casuale per utente (già previsto in 4.3). Una carta alla volta, tre caselle. Quando la pila finisce: "Per oggi hai finito." con il riepilogo e l'invito a tornare domani, non un'altra pila.
-- Il mazzo dà precedenza alle proposte con **meno voti** (come Polis): servono a raggiungere {min_votes_item} e a entrare nel calcolo. Non è ranking per engagement, è copertura.
+- Il mazzo è in **ordine casuale**, stabile per persona e giorno. Niente priorità alle proposte con meno voti: mettere prima quelle sotto {min_votes_item} rivelerebbe i conteggi nascosti (rilievo qa-security in M4, vedi Decisioni del PLAN). Non è ranking per engagement né per popolarità.
 - `daily_deck_size` ≥ {min_votes_participant}: chi finisce il primo mazzo ha già votato abbastanza per contare nel motore (dopo {min_account_age_days_for_engine} giorni di anzianità, da dire onestamente).
 - Chi vuole continuare può farlo da tema/problema: il mazzo finisce, la piattaforma no.
 Non prendiamo: streak punitive, cuori persi, "hai perso la serie".
@@ -389,7 +389,7 @@ Legenda: ✓ coerente · ⚠ coerente con la condizione indicata.
 |---|---|---|---|---|---|---|---|---|---|
 | Ciclo e stati (§2) | ✓ | ✓ | ✓ solo aggregati | ✓ | ✓ | ✓ | ✓ soglie da config | ✓ "perché?" | ✓ |
 | Stanotte (§3.1) | ✓ | ✓ solo aggregati di run | ⚠ "c'era il tuo voto" calcolato al volo per l'utente, mai salvato | ✓ | ✓ | ✓ nessun trending | ✓ | ✓ | ✓ |
-| Mazzo del giorno (§3.2) | ✓ | ✓ | ✓ | ✓ | ⚠ priorità a "meno voti", mai a engagement | ✓ finito | ⚠ dimensione in config | ✓ criterio dichiarato | ✓ |
+| Mazzo del giorno (§3.2) | ✓ | ✓ | ✓ | ✓ | ⚠ ordine casuale per persona e giorno, mai engagement né "meno voti" (rivelerebbe i conteggi nascosti) | ✓ finito | ⚠ dimensione in config | ✓ criterio dichiarato | ✓ |
 | Risultati dopo il voto (§3.3) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ visibili sempre fuori dal mazzo | ✓ |
 | Riepilogo Quaderno (§3.4) | ✓ | ✓ | ⚠ via pseudo come l'export, solo a sé | ✓ | ✓ | ✓ niente condivisione | ✓ | ✓ | ⚠ non persistito |
 | Argomenti dell'altra parte (§3.5) | ✓ | ⚠ "chi la pensa diversamente" = utilità trasversale aggregata, mai "il gruppo X" riferito all'utente | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
@@ -451,7 +451,7 @@ Nessuno entra nelle milestone senza ok di Manuel. Impatto stimato in ordine cres
 | D1 | Microcopy e stati di questo documento (inclusi "sotto soglia" uniformi, onboarding rivestito) | solo UI e testi | M4-M9, ognuna per le sue pagine | v1 |
 | D2 | Risultati visibili dopo il voto nel mazzo (§3.3) | solo UI | M4 | **approvato 2026-10-15** |
 | D3 | Temi seguiti + schermata "Scegli i temi" subito dopo l'onboarding (fuori dai 3 passi obbligatori, si può saltare) | tabella `topic_follows` (user_id, topic_id) con RLS solo proprietario, in export e cancellazione account | M4 | **approvato 2026-10-15** |
-| D4 | Mazzo del giorno | chiave `daily_deck_size` (≥ `min_votes_participant`) via `admin_set_config`; RPC che seleziona proposte non votate dai temi seguiti, priorità a meno voti, ordine casuale; senza temi seguiti pesca da tutti i temi attivi | M4 | **approvato 2026-10-15** |
+| D4 | Mazzo del giorno | chiave `daily_deck_size` (≥ `min_votes_participant`) via `admin_set_config`; RPC che seleziona proposte non votate dai temi seguiti, ordine casuale stabile per persona e giorno (niente priorità a meno voti: rivelerebbe i conteggi sotto soglia); senza temi seguiti pesca da tutti i temi attivi | M4 | **approvato 2026-10-15** |
 | D5 | Quaderno (`/quaderno`) con riepilogo settimanale | RPC SECURITY DEFINER che restituisce all'utente soli i propri conteggi (come l'export), nessuna tabella nuova | M6 (serve `item_consensus`) | v1 |
 | D6 | Stanotte | lettura confronto tra due `item_consensus` consecutive + `agenda_versions` | M9 | v1 |
 | D7 | Campana in-app | tabella `notifications` privata per utente (tipo, riferimento, letto), scritta da RPC/motore; cancellata con l'account | M7 (giurie) | v1 o subito dopo |
