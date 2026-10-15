@@ -890,6 +890,9 @@ isOneToOne: false
 "export_my_data":
 { Args: Record<PropertyKey, never>; Returns: Json
                            },
+"follow_topic":
+{ Args: { "follow": boolean,"topic_id": string }; Returns: undefined
+                           },
 "is_admin":
 { Args: Record<PropertyKey, never>; Returns: boolean
                            },
