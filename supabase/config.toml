@@ -257,17 +257,21 @@ otp_expiry = 3600
 
 [auth.sms]
 # Allow/disallow new user signups via SMS to your project.
-enable_signup = false
+# Arengo (M3): accesso solo con numero di cellulare + OTP.
+enable_signup = true
 # If enabled, users need to confirm their phone number before signing in.
 enable_confirmations = false
 # Template for sending OTP to users
-template = "Your code is {{ .Code }}"
+template = "Il tuo codice Arengo: {{ .Code }}"
 # Controls the minimum amount of time that must pass before sending another sms otp.
 max_frequency = "5s"
 
 # Use pre-defined map of phone number to OTP for testing.
-# [auth.sms.test_otp]
-# 4152127777 = "123456"
+# Solo locale/CI: numeri fittizi per i test e2e (nessun SMS inviato).
+[auth.sms.test_otp]
+393000000001 = "123456"
+393000000002 = "123456"
+393000000003 = "123456"
 
 # Configure logged in session timeouts.
 # [auth.sessions]
@@ -288,9 +292,11 @@ max_frequency = "5s"
 
 # Configure one of the supported SMS providers: `twilio`, `twilio_verify`, `messagebird`, `textlocal`, `vonage`.
 [auth.sms.twilio]
-enabled = false
-account_sid = ""
-message_service_sid = ""
+# Abilitato solo perché Auth accetti il login via SMS in locale/CI: valori fittizi, i numeri di test non
+# inviano SMS. In produzione il provider si configura nel dashboard Supabase.
+enabled = true
+account_sid = "ACtest-solo-locale"
+message_service_sid = "MGtest-solo-locale"
 # DO NOT commit your Twilio auth token to git. Use environment variable substitution instead:
 auth_token = "env(SUPABASE_AUTH_SMS_TWILIO_AUTH_TOKEN)"
 
