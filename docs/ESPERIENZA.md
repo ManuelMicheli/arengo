@@ -431,7 +431,7 @@ Seconda verifica, sulle 14 schermate (`C:\dev\arengo-design\schermate.html`, 202
 | Bar: "si cancellano dopo 7 giorni" | numero fisso e sbagliato (`bar_retention_days` oggi 60) | "dopo {bar_retention_days} giorni" |
 | Cosa sappiamo di te: "Quello che scrivi: pubblico, senza il tuo nome" | in Piazza e Bar l'handle si vede (`piazza_public`, `bar_public`) | "Problemi, proposte e argomenti: senza nome. Piazza e Bar: con il tuo handle, mai con il numero." |
 | Cosa sappiamo di te: voti "con uno pseudonimo" | manca il limite dichiarato (§8) | aggiungere: "Chi gestisce i server con le chiavi potrebbe tecnicamente ricollegarli: per questo lo scriviamo." |
-| Piazza: messaggi senza handle | la spec mostra l'handle in Piazza e Bar | tenere l'handle (piccolo, sans), nessun contatore accanto. Toglierlo è una scelta di prodotto di Manuel |
+| Piazza: messaggi senza handle | la spec mostra l'handle in Piazza e Bar | tenere l'handle (piccolo, sans), nessun contatore accanto. **Deciso da Manuel il 2026-10-15** |
 | Filtro: campo svuotato | punisce chi riformula; il principio 9 riguarda server e log, non il campo nel browser | testo lasciato nel campo (§7.1) |
 
 ### 9.4 Rischi d'esperienza da presidiare
