@@ -255,14 +255,14 @@ isOneToOne: false
                   ]
                 },"problem_facts": {
                   Row: {
-                    "created_at": string,"id": string,"problem_id": string,"proposed_by": string | null,"reviewed_by": string | null,"source_id": string,"statement": string,"status": string
+                    "created_at": string,"fts": unknown,"id": string,"problem_id": string,"proposed_by": string | null,"reviewed_by": string | null,"source_id": string,"statement": string,"status": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "created_at"?: string,"id"?: string,"problem_id": string,"proposed_by"?: string | null,"reviewed_by"?: string | null,"source_id": string,"statement": string,"status"?: string
+                    "created_at"?: string,"fts"?: never,"id"?: string,"problem_id": string,"proposed_by"?: string | null,"reviewed_by"?: string | null,"source_id": string,"statement": string,"status"?: string
                   }
                   Update: {
-                    "created_at"?: string,"id"?: string,"problem_id"?: string,"proposed_by"?: string | null,"reviewed_by"?: string | null,"source_id"?: string,"statement"?: string,"status"?: string
+                    "created_at"?: string,"fts"?: never,"id"?: string,"problem_id"?: string,"proposed_by"?: string | null,"reviewed_by"?: string | null,"source_id"?: string,"statement"?: string,"status"?: string
                   }
                   Relationships: [
                     {
@@ -349,6 +349,38 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"problem_revisions": {
+                  Row: {
+                    "body": string,"id": string,"problem_id": string,"reformulation_id": string | null,"replaced_at": string,"title": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "body": string,"id"?: string,"problem_id": string,"reformulation_id"?: string | null,"replaced_at"?: string,"title": string
+                  }
+                  Update: {
+                    "body"?: string,"id"?: string,"problem_id"?: string,"reformulation_id"?: string | null,"replaced_at"?: string,"title"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "problem_revisions_problem_id_fkey"
+      columns: ["problem_id"]
+isOneToOne: false
+      referencedRelation: "problems"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "problem_revisions_problem_id_fkey"
+      columns: ["problem_id"]
+isOneToOne: false
+      referencedRelation: "problems_public"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "problem_revisions_reformulation_id_fkey"
+      columns: ["reformulation_id"]
+isOneToOne: false
+      referencedRelation: "problem_reformulations"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"problem_supports": {
                   Row: {
                     "created_at": string,"problem_id": string,"voter_pseudo": string
@@ -377,14 +409,14 @@ isOneToOne: false
                   ]
                 },"problems": {
                   Row: {
-                    "activated_at": string | null,"affected": string,"author_id": string | null,"body": string,"created_at": string,"id": string,"merged_into": string | null,"status": string,"title": string,"topic_id": string
+                    "activated_at": string | null,"affected": string,"author_id": string | null,"body": string,"created_at": string,"fts": unknown,"id": string,"merged_into": string | null,"status": string,"title": string,"topic_id": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "activated_at"?: string | null,"affected": string,"author_id"?: string | null,"body": string,"created_at"?: string,"id"?: string,"merged_into"?: string | null,"status"?: string,"title": string,"topic_id": string
+                    "activated_at"?: string | null,"affected": string,"author_id"?: string | null,"body": string,"created_at"?: string,"fts"?: never,"id"?: string,"merged_into"?: string | null,"status"?: string,"title": string,"topic_id": string
                   }
                   Update: {
-                    "activated_at"?: string | null,"affected"?: string,"author_id"?: string | null,"body"?: string,"created_at"?: string,"id"?: string,"merged_into"?: string | null,"status"?: string,"title"?: string,"topic_id"?: string
+                    "activated_at"?: string | null,"affected"?: string,"author_id"?: string | null,"body"?: string,"created_at"?: string,"fts"?: never,"id"?: string,"merged_into"?: string | null,"status"?: string,"title"?: string,"topic_id"?: string
                   }
                   Relationships: [
                     {
@@ -455,14 +487,14 @@ isOneToOne: false
                   ]
                 },"proposals": {
                   Row: {
-                    "author_id": string | null,"cost_and_funding": string,"created_at": string,"foreign_example": string | null,"foreign_source_id": string | null,"how": string,"id": string,"origin": string,"origin_message_id": string | null,"problem_id": string,"risks": string,"status": string,"what": string
+                    "author_id": string | null,"cost_and_funding": string,"created_at": string,"foreign_example": string | null,"foreign_source_id": string | null,"fts": unknown,"how": string,"id": string,"origin": string,"origin_message_id": string | null,"problem_id": string,"risks": string,"status": string,"what": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "author_id"?: string | null,"cost_and_funding": string,"created_at"?: string,"foreign_example"?: string | null,"foreign_source_id"?: string | null,"how": string,"id"?: string,"origin"?: string,"origin_message_id"?: string | null,"problem_id": string,"risks": string,"status"?: string,"what": string
+                    "author_id"?: string | null,"cost_and_funding": string,"created_at"?: string,"foreign_example"?: string | null,"foreign_source_id"?: string | null,"fts"?: never,"how": string,"id"?: string,"origin"?: string,"origin_message_id"?: string | null,"problem_id": string,"risks": string,"status"?: string,"what": string
                   }
                   Update: {
-                    "author_id"?: string | null,"cost_and_funding"?: string,"created_at"?: string,"foreign_example"?: string | null,"foreign_source_id"?: string | null,"how"?: string,"id"?: string,"origin"?: string,"origin_message_id"?: string | null,"problem_id"?: string,"risks"?: string,"status"?: string,"what"?: string
+                    "author_id"?: string | null,"cost_and_funding"?: string,"created_at"?: string,"foreign_example"?: string | null,"foreign_source_id"?: string | null,"fts"?: never,"how"?: string,"id"?: string,"origin"?: string,"origin_message_id"?: string | null,"problem_id"?: string,"risks"?: string,"status"?: string,"what"?: string
                   }
                   Relationships: [
                     {
@@ -520,6 +552,26 @@ isOneToOne: false
       columns: ["added_by"]
 isOneToOne: false
       referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"topic_follows": {
+                  Row: {
+                    "created_at": string,"topic_id": string,"user_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"topic_id": string,"user_id": string
+                  }
+                  Update: {
+                    "created_at"?: string,"topic_id"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "topic_follows_topic_id_fkey"
+      columns: ["topic_id"]
+isOneToOne: false
+      referencedRelation: "topics"
       referencedColumns: ["id"]
     }
                   ]
@@ -670,6 +722,26 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"problem_support_tallies": {
+                  Row: {
+                    "below_threshold": boolean | null,"problem_id": string | null,"supports": number | null
+                  }
+                  ComputedFields: never
+                  Relationships: [
+                    {
+      foreignKeyName: "problem_supports_problem_id_fkey"
+      columns: ["problem_id"]
+isOneToOne: false
+      referencedRelation: "problems"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "problem_supports_problem_id_fkey"
+      columns: ["problem_id"]
+isOneToOne: false
+      referencedRelation: "problems_public"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"problems_public": {
                   Row: {
                     "activated_at": string | null,"affected": string | null,"body": string | null,"created_at": string | null,"id": string | null,"merged_into": string | null,"status": string | null,"title": string | null,"topic_id": string | null
@@ -766,6 +838,20 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"reformulation_tallies": {
+                  Row: {
+                    "below_threshold": boolean | null,"prefer_current": number | null,"prefer_new": number | null,"reformulation_id": string | null,"total": number | null
+                  }
+                  ComputedFields: never
+                  Relationships: [
+                    {
+      foreignKeyName: "problem_reformulation_votes_reformulation_id_fkey"
+      columns: ["reformulation_id"]
+isOneToOne: false
+      referencedRelation: "problem_reformulations"
+      referencedColumns: ["id"]
+    }
+                  ]
                 }
           }
           Functions: {
@@ -783,6 +869,20 @@ isOneToOne: false
                            },
 "complete_onboarding":
 { Args: { "adult": boolean,"consent_art9": boolean,"handle": string,"rules_version": string,"user_id": string }; Returns: undefined
+                           },
+"create_argument":
+{ Args: { "body": string,"proposal_id": string,"side": string,"user_id": string }; Returns: string
+                           },
+"create_problem":
+{ Args: { "affected": string,"body": string,"title": string,"topic_id": string,"user_id": string }; Returns: string
+                           },
+"create_proposal":
+{ Args: { "cost_and_funding": string,"foreign_example": string,"foreign_source_kind": string,"foreign_source_title": string,"foreign_source_url": string,"how": string,"problem_id": string,"risks": string,"user_id": string,"what": string }; Returns: string
+                           },
+"daily_deck":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "problem_id": string,"problem_title": string,"proposal_id": string,"topic_slug": string,"topic_title": string,"what": string
+            }[]
                            },
 "delete_account":
 { Args: { "user_id": string }; Returns: undefined
@@ -802,6 +902,12 @@ isOneToOne: false
 "my_writing_pause":
 { Args: Record<PropertyKey, never>; Returns: string
                            },
+"propose_fact":
+{ Args: { "problem_id": string,"source_kind": string,"source_publisher": string,"source_title": string,"source_url": string,"statement": string,"user_id": string }; Returns: string
+                           },
+"propose_reformulation":
+{ Args: { "body": string,"problem_id": string,"title": string,"user_id": string }; Returns: string
+                           },
 "pseudo_secret_is_test":
 { Args: Record<PropertyKey, never>; Returns: boolean
                            },
@@ -810,6 +916,11 @@ isOneToOne: false
                            },
 "record_filter_block":
 { Args: { "content_type": string,"level": number,"user_id": string }; Returns: string
+                           },
+"search_content":
+{ Args: { "q": string }; Returns: {
+              "id": string,"kind": string,"problem_id": string,"rank": number,"title": string
+            }[]
                            },
 "support_problem":
 { Args: { "problem_id": string }; Returns: undefined
