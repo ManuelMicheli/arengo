@@ -173,6 +173,7 @@ Unico stream parallelo: **E1** (solo `engine/src/core/`, `engine/test/`, `docs/A
 | 2026-10-13 | Soglie implicite del prompt portate in config | principio 7 | numeri nel codice |
 | 2026-10-13 | TypeScript 6.x (non 7) | typescript-eslint (usato da eslint-config-next) non supporta TS 7 | TS 7 con installazione side-by-side |
 | 2026-10-13 | Supabase CLI fissata a 2.120.0 (`pnpm dlx supabase@2.120.0` in locale, `supabase/setup-cli` in CI) | stessa versione locale/CI; setup-cli più veloce di dlx nel job | `latest` |
+| 2026-10-15 | Esperienza utente in `docs/ESPERIENZA.md` (ciclo, navigazione, schermate, tono, coerenza); delta D1-D9 in attesa di ok | dare a M4-M9 e al design una visione comune di flussi e testi | decidere la UX pagina per pagina dentro ogni milestone |
 | 2026-10-13 | Job CI `db` avvia solo Postgres + Auth (`-x` sugli altri servizi) | i test pgTAP non usano API/storage; job più veloce | stack completo |
 | 2026-10-13 | Font: Inter variable subset latin (woff2 + OFL in `src/app/fonts/`) | self-hosted, copre l'italiano, sostituibile in fase design | pacchetto `geist`, font di sistema |
 | 2026-10-13 | `CLAUDE.md` = `@AGENTS.md` anche in `src/`, `supabase/`, `engine/` | Claude Code carica in automatico solo i CLAUDE.md annidati (WORKFLOW §2) | solo AGENTS.md |
