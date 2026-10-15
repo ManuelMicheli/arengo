@@ -173,7 +173,7 @@ select ok(not has_table_privilege('authenticated', 'public.zz_tabella_nuova', 's
 select ok(not has_table_privilege('authenticated', 'public.zz_tabella_nuova', 'insert'), 'tabella nuova: authenticated senza insert');
 
 -- Changelog append-only e modifiche dirette registrate
-select is((select count(*)::integer from public.config_changelog), 1, 'changelog: una riga da admin_set_config');
+select is((select count(*)::integer from public.config_changelog where changed_at >= now()), 1, 'changelog: una riga da admin_set_config');
 select throws_ok($$update public.config_changelog set reason = 'riscritto'$$, 'P0001', 'config_changelog_append_only', 'changelog: UPDATE bloccato');
 select throws_ok($$delete from public.config_changelog$$, 'P0001', 'config_changelog_append_only', 'changelog: DELETE bloccato');
 select throws_ok($$truncate public.config_changelog$$, 'P0001', 'config_changelog_append_only', 'changelog: TRUNCATE bloccato');

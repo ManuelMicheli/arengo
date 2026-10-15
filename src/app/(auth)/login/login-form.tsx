@@ -6,7 +6,7 @@ import { sendOtp, verifyOtp, type LoginState } from "./actions";
 
 const initial: LoginState = { step: "phone" };
 
-export function LoginForm() {
+export function LoginForm({ next }: { next?: string }) {
   const [sent, send, sending] = useActionState(sendOtp, initial);
   const [verified, verify, verifying] = useActionState(verifyOtp, initial);
   const codeStep = sent.step === "code";
@@ -34,6 +34,7 @@ export function LoginForm() {
   return (
     <form action={verify} className="flex flex-col gap-3">
       <input type="hidden" name="phone" value={sent.phone} />
+      {next && <input type="hidden" name="next" value={next} />}
       <p>Abbiamo inviato un codice di 6 cifre al numero indicato.</p>
       <label className="flex flex-col gap-1">
         Codice

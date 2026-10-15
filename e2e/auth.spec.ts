@@ -35,7 +35,8 @@ test("onboarding: conferme obbligatorie, poi export e cancellazione", async ({ p
 
   await page.getByRole("checkbox", { name: /Acconsento/ }).check();
   await page.getByRole("button", { name: "Completa la registrazione" }).click();
-  await expect(page).toHaveURL(/\/$/);
+  // M4 (D3): dopo l'onboarding si sceglie i temi.
+  await expect(page).toHaveURL(/\/temi\?benvenuto=1$/);
 
   await page.goto("/account");
   const download = page.waitForEvent("download");
@@ -52,6 +53,10 @@ test("onboarding: conferme obbligatorie, poi export e cancellazione", async ({ p
   await expect(page).toHaveURL(/\/login$/);
 });
 
+// IP dedicato (x-forwarded-for, come dietro Vercel): esaurire il limite non blocca i login degli altri test.
+test.describe("limite OTP", () => {
+test.use({ extraHTTPHeaders: { "x-forwarded-for": "10.9.9.9" } });
+
 test("oltre il limite di richieste OTP per IP → 429", async ({ page }) => {
   // Numeri diversi fuori da test_otp: ogni richiesta conta per l'IP (Arengo) e non tocca il limite
   // per numero di Supabase; l'invio fallisce (provider fittizio) finché scatta il nostro limite.
@@ -66,4 +71,5 @@ test("oltre il limite di richieste OTP per IP → 429", async ({ page }) => {
   }
   expect(status).toBe("429");
   await expect(page.locator("main [role=alert]")).toContainText("Troppe richieste");
+});
 });

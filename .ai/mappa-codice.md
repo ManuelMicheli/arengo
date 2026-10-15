@@ -7,9 +7,18 @@ Generata da `pnpm ai:map`: non modificare a mano. Consultare solo con Grep.
 - `/login` (page) → src/app/(auth)/login/page.tsx
 - `/account/export` (route) → src/app/account/export/route.ts
 - `/account` (page) → src/app/account/page.tsx
+- `/cerca` (page) → src/app/cerca/page.tsx
 - `/onboarding` (page) → src/app/onboarding/page.tsx
 - `/` (page) → src/app/page.tsx
 - `/privacy` (page) → src/app/privacy/page.tsx
+- `/problemi/[id]` (page) → src/app/problemi/[id]/page.tsx
+- `/problemi/[id]/proponi` (page) → src/app/problemi/[id]/proponi/page.tsx
+- `/problemi/[id]/riformula` (page) → src/app/problemi/[id]/riformula/page.tsx
+- `/problemi/[id]/scheda` (page) → src/app/problemi/[id]/scheda/page.tsx
+- `/proposte/[id]` (page) → src/app/proposte/[id]/page.tsx
+- `/temi/[slug]/nuovo-problema` (page) → src/app/temi/[slug]/nuovo-problema/page.tsx
+- `/temi/[slug]` (page) → src/app/temi/[slug]/page.tsx
+- `/temi` (page) → src/app/temi/page.tsx
 
 ## Tabelle e viste (da migrazioni)
 
@@ -32,6 +41,8 @@ Generata da `pnpm ai:map`: non modificare a mano. Consultare solo con Grep.
 - `public.problem_facts` → supabase/migrations/20261013100000_core_schema.sql
 - `public.problem_reformulation_votes` → supabase/migrations/20261013100000_core_schema.sql
 - `public.problem_reformulations` → supabase/migrations/20261013100000_core_schema.sql
+- `public.problem_revisions` → supabase/migrations/20261016100000_contenuti.sql
+- `public.problem_support_tallies` → supabase/migrations/20261016100000_contenuti.sql
 - `public.problem_supports` → supabase/migrations/20261013100000_core_schema.sql
 - `public.problems_public` → supabase/migrations/20261013100200_views_config.sql
 - `public.problems` → supabase/migrations/20261013100000_core_schema.sql
@@ -40,7 +51,9 @@ Generata da `pnpm ai:map`: non modificare a mano. Consultare solo con Grep.
 - `public.proposal_votes` → supabase/migrations/20261013100000_core_schema.sql
 - `public.proposals_public` → supabase/migrations/20261013100200_views_config.sql
 - `public.proposals` → supabase/migrations/20261013100000_core_schema.sql
+- `public.reformulation_tallies` → supabase/migrations/20261016100000_contenuti.sql
 - `public.sources` → supabase/migrations/20261013100000_core_schema.sql
+- `public.topic_follows` → supabase/migrations/20261016100000_contenuti.sql
 - `public.topics` → supabase/migrations/20261013100000_core_schema.sql
 
 ## File → export
@@ -78,6 +91,8 @@ Generata da `pnpm ai:map`: non modificare a mano. Consultare solo con Grep.
 - src/app/account/delete-form.tsx: DeleteForm
 - src/app/account/export/route.ts: GET
 - src/app/account/page.tsx: AccountPage, metadata
+- src/app/cerca/page.tsx: CercaPage, metadata
+- src/app/deck.tsx: Deck, DeckCard
 - src/app/layout.tsx: RootLayout, metadata
 - src/app/onboarding/actions.ts: OnboardingState, OnboardingValues, completeOnboarding
 - src/app/onboarding/onboarding-form.tsx: OnboardingForm
@@ -86,10 +101,40 @@ Generata da `pnpm ai:map`: non modificare a mano. Consultare solo con Grep.
 - src/app/onboarding/schema.ts: isReservedHandle, onboardingSchema
 - src/app/page.tsx: Home
 - src/app/privacy/page.tsx: PrivacyPage, metadata
+- src/app/problemi/[id]/actions.ts: createProposal, proposeFact, proposeReformulation, supportProblem, voteReformulation
+- src/app/problemi/[id]/load.ts: loadProblemForWriting
+- src/app/problemi/[id]/page.tsx: ProblemaPage, metadata
+- src/app/problemi/[id]/problem-buttons.tsx: ReformulationVote, SupportButton
+- src/app/problemi/[id]/proponi/page.tsx: ProponiPage, metadata
+- src/app/problemi/[id]/riformula/page.tsx: RiformulaPage, metadata
+- src/app/problemi/[id]/scheda/page.tsx: SchedaPage, metadata
+- src/app/proposte/[id]/actions.ts: createArgument, rateArgument, voteProposal
+- src/app/proposte/[id]/argument-rating.tsx: ArgumentRating
+- src/app/proposte/[id]/page.tsx: PropostaPage, metadata
+- src/app/proposte/[id]/proposal-vote.tsx: ProposalVote
+- src/app/temi/[slug]/nuovo-problema/actions.ts: createProblem
+- src/app/temi/[slug]/nuovo-problema/page.tsx: NuovoProblemaPage, metadata
+- src/app/temi/[slug]/page.tsx: TemaPage, metadata
+- src/app/temi/actions.ts: setFollow
+- src/app/temi/page.tsx: TemiPage, metadata
+- src/components/action-form.tsx: ActionForm
+- src/components/guest-note.tsx: GuestNote
 - src/components/legal-text.tsx: LegalText
+- src/components/proposal-results.tsx: ProposalResultsView
+- src/components/search-first-link.tsx: SearchFirstLink
 - src/components/turnstile.tsx: Turnstile
+- src/components/vote-buttons.tsx: VoteButtons, VoteValue
 - src/instrumentation.ts: register
 - src/lib/config.ts: readConfig
+- src/lib/content/config.ts: readNumbers, readRateLimits
+- src/lib/content/dates.ts: isWithinDays
+- src/lib/content/errors.ts: rpcErrorMessage
+- src/lib/content/results.test.ts
+- src/lib/content/results.ts: Argument, ProposalResults, loadArguments, loadResults, orderArguments
+- src/lib/content/schemas.test.ts
+- src/lib/content/schemas.ts: LIMITS, SOURCE_KINDS, SOURCE_KIND_LABELS, argumentSchema, factSchema, problemSchema, proposalSchema, reformulationSchema, voteSchema
+- src/lib/content/viewer.ts: ViewerState, getViewer
+- src/lib/content/write.ts: WriteState, writeContent
 - src/lib/handle.ts: HANDLE_CHARS, HANDLE_MAX_LENGTH, HANDLE_MIN_LENGTH
 - src/lib/legal.test.ts
 - src/lib/legal.ts: LegalBlock, LegalDoc, loadLegal, parseLegal
@@ -105,7 +150,12 @@ Generata da `pnpm ai:map`: non modificare a mano. Consultare solo con Grep.
 - src/lib/rate-limit.test.ts
 - src/lib/rate-limit.ts: LimitStore, OtpLimits, allowOtpRequest, getLimitStore, isNonProductionEnv, memoryStore, otpLimitsSchema, phoneKey
 - src/lib/request-ip.ts: clientIp
+- src/lib/safe-next.test.ts
+- src/lib/safe-next.ts: safeNext
 - src/lib/secret-guard.ts: assertAppSecret
+- src/lib/seed-cookie.ts: SEED_COOKIE
+- src/lib/seed-order.test.ts
+- src/lib/seed-order.ts: SEED_COOKIE, seededOrder
 - src/lib/supabase/env.ts: publicSupabaseEnv, secretSupabaseKey
 - src/lib/supabase/server.ts: createUserClient
 - src/lib/supabase/service.ts: createServiceClient
@@ -119,3 +169,4 @@ Generata da `pnpm ai:map`: non modificare a mano. Consultare solo con Grep.
 - docs/PLAN.md
 - pnpm-lock.yaml
 - src/types/database.ts
+- supabase/migrations/20261016100000_contenuti.sql

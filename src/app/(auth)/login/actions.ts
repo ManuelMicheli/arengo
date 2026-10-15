@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { readConfig } from "@/lib/config";
 import { otpCodeSchema, phoneSchema } from "@/lib/phone";
 import { allowOtpRequest, otpLimitsSchema } from "@/lib/rate-limit";
+import { safeNext } from "@/lib/safe-next";
 import { clientIp } from "@/lib/request-ip";
 import { createUserClient } from "@/lib/supabase/server";
 
@@ -52,5 +53,6 @@ export async function verifyOtp(_prev: LoginState, form: FormData): Promise<Logi
   if (error) return { step: "code", phone: phone.data, error: "Codice errato o scaduto.", status: 400 };
 
   const { data: status } = await supabase.rpc("my_onboarding_status");
-  redirect(status === "complete" ? "/" : "/onboarding");
+  // Ritorno alla pagina da cui si è partiti (ospite che voleva votare), solo se è un percorso del sito.
+  redirect(status === "complete" ? safeNext(form.get("next")) : "/onboarding");
 }
