@@ -11,7 +11,7 @@ import { voteProposal } from "./proposte/[id]/actions";
 
 export type DeckCard = { proposal_id: string; problem_title: string; topic_title: string; what: string };
 
-export function Deck({ cards }: { cards: DeckCard[] }) {
+export function Deck({ cards, engineAgeDays }: { cards: DeckCard[]; engineAgeDays: number | null }) {
   const [index, setIndex] = useState(0);
   const [results, setResults] = useState<ProposalResults | null>(null);
 
@@ -29,6 +29,12 @@ export function Deck({ cards }: { cards: DeckCard[] }) {
     return (
       <section className="flex flex-col gap-2">
         <p className="text-xl">Per oggi hai finito. Stanotte contiamo i voti.</p>
+        {engineAgeDays !== null && (
+          <p className="text-grafite-2b">
+            I tuoi voti entrano nel calcolo dopo {engineAgeDays} giorni dall&apos;iscrizione: così nessuno può creare
+            account per spostare i risultati.
+          </p>
+        )}
         <Link href="/temi" className="self-start underline">
           Continua per tema
         </Link>

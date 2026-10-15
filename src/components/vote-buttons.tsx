@@ -5,6 +5,7 @@
 import { useState, useTransition } from "react";
 
 export type VoteValue = -1 | 0 | 1;
+const FIRST_VOTE_KEY = "arengo_primo_voto";
 const OPTIONS: { value: VoteValue; label: string }[] = [
   { value: 1, label: "D'accordo" },
   { value: -1, label: "Contrario" },
@@ -23,6 +24,7 @@ export function VoteButtons({
   const [current, setCurrent] = useState<VoteValue | null>(initial);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  const [firstVote, setFirstVote] = useState(false);
 
   function choose(value: VoteValue) {
     startTransition(async () => {
@@ -34,6 +36,15 @@ export function VoteButtons({
       setError(null);
       setCurrent(value);
       onVoted?.(value);
+      // Al primo voto di sempre, una sola volta: preferenza locale del browser, non va al server.
+      try {
+        if (!localStorage.getItem(FIRST_VOTE_KEY)) {
+          localStorage.setItem(FIRST_VOTE_KEY, "1");
+          setFirstVote(true);
+        }
+      } catch {
+        // Archiviazione del browser non disponibile: la nota resta comunque nella pagina della proposta.
+      }
     });
   }
 
@@ -53,6 +64,7 @@ export function VoteButtons({
           </button>
         ))}
       </div>
+      {firstVote && <p role="status">Nessuno vede come hai votato: contano solo i totali.</p>}
       {current === 0 && <p className="text-sm text-grafite-2b">Passi, va benissimo. Anche questo aiuta il calcolo.</p>}
       <p className="text-sm text-grafite-2b">Puoi cambiarlo quando vuoi: stanotte contiamo quello che c&apos;è.</p>
       {error && (

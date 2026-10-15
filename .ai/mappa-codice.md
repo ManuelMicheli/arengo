@@ -127,6 +127,7 @@ Generata da `pnpm ai:map`: non modificare a mano. Consultare solo con Grep.
 - src/instrumentation.ts: register
 - src/lib/config.ts: readConfig
 - src/lib/content/config.ts: readNumbers, readRateLimits
+- src/lib/content/dates.ts: isWithinDays
 - src/lib/content/errors.ts: rpcErrorMessage
 - src/lib/content/results.test.ts
 - src/lib/content/results.ts: Argument, ProposalResults, loadArguments, loadResults, orderArguments

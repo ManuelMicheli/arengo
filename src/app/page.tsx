@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { readNumbers } from "@/lib/content/config";
+import { isWithinDays } from "@/lib/content/dates";
 import { getViewer } from "@/lib/content/viewer";
 import { Deck, type DeckCard } from "./deck";
 
@@ -8,7 +10,15 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ a
   const { supabase, state } = await getViewer();
 
   let cards: DeckCard[] | null = null;
+  let engineAgeDays: number | null = null;
   if (state === "complete") {
+    // Account più giovane di min_account_age_days_for_engine: a fine mazzo lo diciamo invece di nasconderlo.
+    const [{ data: profile }, cfg] = await Promise.all([
+      supabase.from("profiles").select("created_at").maybeSingle(),
+      readNumbers(supabase, ["min_account_age_days_for_engine"] as const),
+    ]);
+    const days = cfg.min_account_age_days_for_engine;
+    if (profile && isWithinDays(profile.created_at, days)) engineAgeDays = days;
     const { data } = await supabase.rpc("daily_deck");
     cards = (data ?? []).map((c) => ({
       proposal_id: c.proposal_id,
@@ -27,7 +37,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ a
       </header>
 
       {cards !== null ? (
-        <Deck cards={cards} />
+        <Deck cards={cards} engineAgeDays={engineAgeDays} />
       ) : (
         <section className="flex flex-col gap-2">
           <p>Leggi problemi e proposte senza registrarti. Per votare e scrivere serve un account verificato.</p>

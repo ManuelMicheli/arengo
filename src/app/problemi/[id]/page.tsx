@@ -43,9 +43,9 @@ export default async function ProblemaPage({
       .order("created_at"),
     supabase
       .from("problem_reformulations")
-      .select("id, title, body, created_at")
+      .select("id, title, body, status, created_at")
       .eq("problem_id", id)
-      .eq("status", "open")
+      .in("status", ["open", "rejected"])
       .order("created_at"),
     supabase.from("problem_revisions").select("id, title, body, replaced_at").eq("problem_id", id).order("replaced_at", { ascending: false }),
     supabase.from("proposals_public").select("id, what").eq("problem_id", id).eq("status", "open"),
@@ -53,7 +53,9 @@ export default async function ProblemaPage({
   ]);
   const topic = topicRes.data;
   const tally = tallyRes.data;
-  const reformulations = refsRes.data ?? [];
+  const reformulations = (refsRes.data ?? []).filter((r) => r.status === "open");
+  // Chiuse perché un'altra è stata accettata: non bocciate, votate sul testo vecchio.
+  const closedReformulations = (refsRes.data ?? []).filter((r) => r.status === "rejected");
   const proposals = seededOrder(
     (propsRes.data ?? []).filter((p): p is { id: string; what: string } => !!p.id && !!p.what),
     seed,
@@ -205,6 +207,17 @@ export default async function ProblemaPage({
             </div>
           );
         })}
+        {closedReformulations.map((r) => (
+          <div key={r.id} className="flex flex-col gap-1 border-b border-filo pb-3 text-grafite-2b">
+            <p className="text-sm">Chiusa: il testo è cambiato prima della fine del voto.</p>
+            <p className="font-serif">{r.title}</p>
+            {canAct && (
+              <Link href={`/problemi/${id}/riformula`} className="self-start text-sm underline">
+                Proponila sul testo nuovo
+              </Link>
+            )}
+          </div>
+        ))}
         {canAct ? (
           <Link href={`/problemi/${id}/riformula`} className="self-start underline">
             Proponi una formulazione più neutra

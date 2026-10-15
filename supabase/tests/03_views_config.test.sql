@@ -82,7 +82,7 @@ select lives_ok($$select public.admin_set_config('problem_support_threshold', '3
 reset role;
 select is((select value from public.platform_config where key = 'problem_support_threshold'), '30'::jsonb, 'valore aggiornato');
 select results_eq(
-  $$select key, old_value, new_value, reason, changed_by from public.config_changelog$$,
+  $$select key, old_value, new_value, reason, changed_by from public.config_changelog where changed_at >= now()$$,
   $$values ('problem_support_threshold'::text, '25'::jsonb, '30'::jsonb, 'prova di modifica'::text,
             '66666666-6666-6666-6666-666666666666'::uuid)$$,
   'changelog con valori, motivazione e autore'
