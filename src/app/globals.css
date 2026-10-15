@@ -1,5 +1,59 @@
 @import "tailwindcss";
 
+/*
+ * Sistema visivo "La politica a matita" (docs/DESIGN.md).
+ * Due strati: la carta è rigorosa, la mano lascia pochi segni a matita.
+ * La matita segna, non scrive: i testi da leggere sono sempre nitidi.
+ */
 @theme {
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-bricolage), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-newsreader), Georgia, serif;
+  --font-mano: var(--font-reenie), cursive;
+
+  /* Carta */
+  --color-carta: #ffffff;
+  --color-lastra: #f3f3f1; /* piano di tavole e oggetti */
+  --color-filo: #e3e3e6; /* bordi da 1px, l'unico bordo ammesso */
+  --color-quadretto: #edf0f3;
+  --color-margine: #f2b8b8;
+
+  /* Grafite: HB suggerimenti, 2B secondario, 4B testo a matita, 6B interfaccia */
+  --color-grafite-hb: #8b8b91;
+  --color-grafite-2b: #5d5d64;
+  --color-grafite-4b: #3b3b41;
+  --color-grafite-6b: #1f1f23;
+  --color-inchiostro: #000000; /* solo ciò che è passato a penna (Agenda) */
+
+  /* Evidenziatori: gruppi d'opinione, assegnati in ordine a ogni run, mai di parte */
+  --color-ev-giallo: #f2ff4d;
+  --color-ev-rosa: #ff8fd6;
+  --color-ev-verde: #8dffb5;
+  --color-ev-arancio: #ffb44d;
+  --color-ev-azzurro: #8ce8ff;
+
+  /* Gomma: messaggi del filtro */
+  --color-gomma: #f6ddd8;
+  --color-gomma-testo: #73362e;
+
+  --ease-segno: cubic-bezier(0.7, 0, 0.2, 1);
+}
+
+@layer base {
+  html {
+    background-color: var(--color-carta);
+    color: var(--color-grafite-6b);
+    font-variant-numeric: tabular-nums;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  *,
+  ::before,
+  ::after {
+    border-color: var(--color-filo);
+  }
+
+  :focus-visible {
+    outline: 1.5px solid var(--color-grafite-6b);
+    outline-offset: 4px;
+  }
 }

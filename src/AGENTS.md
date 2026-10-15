@@ -12,7 +12,7 @@ Next.js 16 App Router (Turbopack), React 19, TypeScript strict (`noUncheckedInde
 - Mai leggere `author_id` o `voter_pseudo`: usare le viste `*_public` e gli aggregati.
 - Testo bloccato dal filtro: non salvarlo, non loggarlo (console, Sentry, errori).
 - Font solo self-hosted (`next/font/local`, file in `app/fonts/`, licenza OFL accanto). Mai font da Google (né loader `google` di next/font né CDN).
-- UI in italiano, date in Europe/Rome. Niente design: HTML semantico + Tailwind minimo.
+- UI in italiano, date in Europe/Rome. HTML semantico + Tailwind con i soli token di `app/globals.css` (niente colori, font o grigi di default di Tailwind). Regole visive in `docs/DESIGN.md`; il design delle pagine lo decide Manuel.
 - `types/database.ts` è generato: non scriverlo a mano, non leggerlo intero.
 - Segreti solo da `process.env` (elenco in `.env.example`); `NEXT_PUBLIC_*` solo per valori pubblici.
 
