@@ -79,7 +79,7 @@ Generata da `pnpm ai:map`: non modificare a mano. Consultare solo con Grep.
 - src/app/account/export/route.ts: GET
 - src/app/account/page.tsx: AccountPage, metadata
 - src/app/layout.tsx: RootLayout, metadata
-- src/app/onboarding/actions.ts: OnboardingState, completeOnboarding
+- src/app/onboarding/actions.ts: OnboardingState, OnboardingValues, completeOnboarding
 - src/app/onboarding/onboarding-form.tsx: OnboardingForm
 - src/app/onboarding/page.tsx: OnboardingPage, metadata
 - src/app/onboarding/schema.test.ts

@@ -26,7 +26,7 @@ export async function sendOtp(_prev: LoginState, form: FormData): Promise<LoginS
   const limits = otpLimitsSchema.safeParse(await readConfig(supabase, "otp_rate_limits"));
   if (!limits.success) return { step: "phone", error: "Servizio non disponibile.", status: 500 };
   if (!(await allowOtpRequest({ ip: await clientIp(), phone }, limits.data))) {
-    return { step: "phone", error: TOO_MANY, status: 429 };
+    return { step: "phone", phone, error: TOO_MANY, status: 429 };
   }
 
   const captchaToken = form.get("cf-turnstile-response");
@@ -35,8 +35,8 @@ export async function sendOtp(_prev: LoginState, form: FormData): Promise<LoginS
     options: { shouldCreateUser: true, captchaToken: typeof captchaToken === "string" ? captchaToken : undefined },
   });
   if (error) {
-    if (error.status === 429) return { step: "phone", error: TOO_MANY, status: 429 };
-    return { step: "phone", error: "Invio del codice non riuscito. Riprova.", status: 400 };
+    if (error.status === 429) return { step: "phone", phone, error: TOO_MANY, status: 429 };
+    return { step: "phone", phone, error: "Invio del codice non riuscito. Riprova.", status: 400 };
   }
   return { step: "code", phone, status: 200 };
 }

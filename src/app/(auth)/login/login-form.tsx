@@ -16,7 +16,7 @@ export function LoginForm() {
       <form action={send} className="flex flex-col gap-3">
         <label className="flex flex-col gap-1">
           Numero di cellulare
-          <input name="phone" type="tel" autoComplete="tel" required className="border p-2" placeholder="333 123 4567" />
+          <input name="phone" type="tel" defaultValue={sent.phone ?? ""} autoComplete="tel" required className="border p-2" placeholder="333 123 4567" />
         </label>
         <Turnstile resetKey={sent} />
         {sent.error && (
