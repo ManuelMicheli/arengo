@@ -164,7 +164,7 @@ I passi restano quelli di M3 (maggiore età, regole + Scala, consenso art. 9); c
 - **Handle**: suggerimenti generati, controllo disponibilità al volo, nessun nome reale richiesto ("non serve il tuo nome: qui contano le idee").
 
 ### 5.3 Dopo l'onboarding: il primo giro
-1. **Scegli i temi che ti interessano** (chip, almeno uno, modificabile dal Quaderno). "Lo sai solo tu, e non entra nel calcolo." **[delta]**
+1. **Scegli i temi che ti interessano**: schermata subito dopo i 3 passi obbligatori, che si può saltare (chip, modificabili dal Quaderno e da `/temi`). "Lo sai solo tu, e non entra nel calcolo." Chi salta riceve un mazzo da tutti i temi attivi. **[D3, approvato]**
 2. **Il primo mazzo**: 5 carte, dai temi scelti. Al primo voto, una nota a margine (corsivo a mano): "il voto è segreto, contano solo i totali". Dopo il primo voto si vedono le barre per gruppo, con una spiegazione unica: "Ogni colore è un gruppo di persone che votano in modo simile. Il motore li ricalcola ogni notte. Non sai in che gruppo sei: nessuno lo sa."
 3. **Fine del primo mazzo**: "Stanotte contiamo anche i tuoi voti" + nota onesta: "entrano nel calcolo dopo {min_account_age_days_for_engine} giorni dall'iscrizione: così nessuno può creare account per spostare i risultati." Poi un solo invito: "Vuoi dire la tua su un problema? Leggi le proposte di {tema}."
 
@@ -444,14 +444,14 @@ Seconda verifica, sulle 14 schermate (`C:\dev\arengo-design\schermate.html`, 202
 
 ## 10. Delta proposti a BRIEF/PLAN
 
-Nessuno entra nelle milestone senza ok di Manuel. Impatto stimato in ordine crescente.
+Nessuno entra nelle milestone senza ok di Manuel. Impatto stimato in ordine crescente. D2, D3, D4 approvati il 2026-10-15 dentro M4.
 
 | # | Funzione | Cosa serve | Milestone | Quando |
 |---|---|---|---|---|
 | D1 | Microcopy e stati di questo documento (inclusi "sotto soglia" uniformi, onboarding rivestito) | solo UI e testi | M4-M9, ognuna per le sue pagine | v1 |
-| D2 | Risultati visibili dopo il voto nel mazzo (§3.3) | solo UI | M4 | v1 |
-| D3 | Temi seguiti + scelta in onboarding | tabella `topic_follows` (user_id, topic_id) con RLS solo proprietario, in export e cancellazione account | M4 (task nuovo) | v1 |
-| D4 | Mazzo del giorno | chiave `daily_deck_size` (≥ `min_votes_participant`) via `admin_set_config`; RPC che seleziona proposte non votate dai temi seguiti, priorità a meno voti, ordine casuale | M4 | v1 |
+| D2 | Risultati visibili dopo il voto nel mazzo (§3.3) | solo UI | M4 | **approvato 2026-10-15** |
+| D3 | Temi seguiti + schermata "Scegli i temi" subito dopo l'onboarding (fuori dai 3 passi obbligatori, si può saltare) | tabella `topic_follows` (user_id, topic_id) con RLS solo proprietario, in export e cancellazione account | M4 | **approvato 2026-10-15** |
+| D4 | Mazzo del giorno | chiave `daily_deck_size` (≥ `min_votes_participant`) via `admin_set_config`; RPC che seleziona proposte non votate dai temi seguiti, priorità a meno voti, ordine casuale; senza temi seguiti pesca da tutti i temi attivi | M4 | **approvato 2026-10-15** |
 | D5 | Quaderno (`/quaderno`) con riepilogo settimanale | RPC SECURITY DEFINER che restituisce all'utente soli i propri conteggi (come l'export), nessuna tabella nuova | M6 (serve `item_consensus`) | v1 |
 | D6 | Stanotte | lettura confronto tra due `item_consensus` consecutive + `agenda_versions` | M9 | v1 |
 | D7 | Campana in-app | tabella `notifications` privata per utente (tipo, riferimento, letto), scritta da RPC/motore; cancellata con l'account | M7 (giurie) | v1 o subito dopo |
