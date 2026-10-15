@@ -58,5 +58,6 @@ export async function completeOnboarding(_prev: OnboardingState, form: FormData)
     const known = Object.keys(RPC_ERRORS).find((code) => error.message.includes(code));
     return { error: known ? RPC_ERRORS[known] : "Registrazione non riuscita. Riprova.", values };
   }
-  redirect("/");
+  // Subito dopo: scelta dei temi (D3), così il primo mazzo non nasce vuoto. Si può saltare.
+  redirect("/temi?benvenuto=1");
 }
