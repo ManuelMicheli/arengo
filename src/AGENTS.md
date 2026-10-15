@@ -4,6 +4,7 @@
 Next.js 16 App Router (Turbopack), React 19, TypeScript strict (`noUncheckedIndexedAccess`), Tailwind 4 (`@import "tailwindcss"` in `app/globals.css`, niente `tailwind.config`). Alias `@/*` → `src/*`.
 
 ## Convenzioni
+- Client Supabase: `lib/supabase/server.ts` (sessione utente, cookie) e `lib/supabase/service.ts` (service role, solo RPC riservate al server con `user_id` da `auth.getUser()`).
 - Rotte e Server Actions in `app/`; logica condivisa in `lib/` (client Supabase, rate limit, `checkContent`, schemi Zod).
 - Server Component di default; `"use client"` solo dove serve interazione.
 - Intercettazione richieste in `proxy.ts` (non `middleware.ts`): solo UX (redirect), mai confine di sicurezza. L'autorizzazione vera sta in RLS/RPC.
@@ -16,4 +17,4 @@ Next.js 16 App Router (Turbopack), React 19, TypeScript strict (`noUncheckedInde
 - Segreti solo da `process.env` (elenco in `.env.example`); `NEXT_PUBLIC_*` solo per valori pubblici.
 
 ## Test
-Vitest: file `*.test.ts(x)` accanto al codice, `pnpm test`. `pnpm typecheck` esegue prima `next typegen`.
+Vitest: file `*.test.ts(x)` accanto al codice, `pnpm test` (alias `@/` attivo). E2E Playwright in `e2e/`: solo job CI `e2e`, mai in locale. `pnpm typecheck` esegue prima `next typegen`.

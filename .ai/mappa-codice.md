@@ -4,7 +4,12 @@ Generata da `pnpm ai:map`: non modificare a mano. Consultare solo con Grep.
 
 ## Rotte
 
+- `/login` (page) → src/app/(auth)/login/page.tsx
+- `/account/export` (route) → src/app/account/export/route.ts
+- `/account` (page) → src/app/account/page.tsx
+- `/onboarding` (page) → src/app/onboarding/page.tsx
 - `/` (page) → src/app/page.tsx
+- `/privacy` (page) → src/app/privacy/page.tsx
 
 ## Tabelle e viste (da migrazioni)
 
@@ -51,6 +56,7 @@ Generata da `pnpm ai:map`: non modificare a mano. Consultare solo con Grep.
 - engine/src/core/reputation.ts: computeReputation
 - engine/src/core/types.ts: Classification, ClusterStat, EngineConfig, EngineInput, EngineOutput, GroupAgreement, InsufficientReason, ItemResult, JuryPanel, PrivateOutput, PublicOutput, ReputationEvent, ReputationScore, RunClassification, Vote, VoteValue
 - engine/src/core/validate.ts: assertValidAccountAges, assertValidConfig, assertValidHistory, assertValidJuryEligible, assertValidReputationEvents, assertValidVotes
+- engine/src/guard/secret-guard.ts: SecretGuardEnv, assertProductionSecret, isProductionEnv
 - engine/test/consensus.test.ts
 - engine/test/engine.synthetic.test.ts
 - engine/test/fixtures.ts: SEED_CONFIG
@@ -59,14 +65,34 @@ Generata da `pnpm ai:map`: non modificare a mano. Consultare solo con Grep.
 - engine/test/pca-kmeans.test.ts
 - engine/test/privacy.test.ts
 - engine/test/prng.test.ts
+- engine/test/secret-guard.test.ts
 - engine/test/seed-config.test.ts
 - engine/test/synthetic.ts: BASE_OPTIONS, ExactItem, SyntheticData, SyntheticOptions, generateExact, generatePolarized
 - scripts/ai-map.mjs: buildMap, extractExports, extractTables, isEntrypoint, listFiles, routeFromFile
 - scripts/ai-map.test.mjs
 - scripts/check-changed.mjs
+- src/app/(auth)/login/actions.ts: LoginState, sendOtp, verifyOtp
+- src/app/(auth)/login/login-form.tsx: LoginForm
+- src/app/(auth)/login/page.tsx: LoginPage, metadata
+- src/app/account/actions.ts: DeleteState, deleteAccount
+- src/app/account/delete-form.tsx: DeleteForm
+- src/app/account/export/route.ts: GET
+- src/app/account/page.tsx: AccountPage, metadata
 - src/app/layout.tsx: RootLayout, metadata
+- src/app/onboarding/actions.ts: OnboardingState, OnboardingValues, completeOnboarding
+- src/app/onboarding/onboarding-form.tsx: OnboardingForm
+- src/app/onboarding/page.tsx: OnboardingPage, metadata
+- src/app/onboarding/schema.test.ts
+- src/app/onboarding/schema.ts: isReservedHandle, onboardingSchema
 - src/app/page.tsx: Home
+- src/app/privacy/page.tsx: PrivacyPage, metadata
+- src/components/legal-text.tsx: LegalText
+- src/components/turnstile.tsx: Turnstile
+- src/instrumentation.ts: register
+- src/lib/config.ts: readConfig
 - src/lib/handle.ts: HANDLE_CHARS, HANDLE_MAX_LENGTH, HANDLE_MIN_LENGTH
+- src/lib/legal.test.ts
+- src/lib/legal.ts: LegalBlock, LegalDoc, loadLegal, parseLegal
 - src/lib/moderation/check-content.test.ts
 - src/lib/moderation/check-content.ts: CheckResult, FilterParams, LexiconEntry, RuleId, SeverityLevel, checkContent, compileLexicon
 - src/lib/moderation/guard.test.ts
@@ -74,6 +100,16 @@ Generata da `pnpm ai:map`: non modificare a mano. Consultare solo con Grep.
 - src/lib/moderation/normalize.ts: NormalizedText, Token, foldCase, normalize, normalizeJoinedText, normalizeText, normalizeWord
 - src/lib/moderation/supabase-deps.test.ts
 - src/lib/moderation/supabase-deps.ts: createModerationDeps, resetModerationCache
+- src/lib/phone.test.ts
+- src/lib/phone.ts: otpCodeSchema, phoneSchema
+- src/lib/rate-limit.test.ts
+- src/lib/rate-limit.ts: LimitStore, OtpLimits, allowOtpRequest, getLimitStore, isNonProductionEnv, memoryStore, otpLimitsSchema, phoneKey
+- src/lib/request-ip.ts: clientIp
+- src/lib/secret-guard.ts: assertAppSecret
+- src/lib/supabase/env.ts: publicSupabaseEnv, secretSupabaseKey
+- src/lib/supabase/server.ts: createUserClient
+- src/lib/supabase/service.ts: createServiceClient
+- src/proxy.ts: config, proxy
 - src/types/database.ts: CompositeTypes, Constants, Database, Enums, Json, Tables, TablesInsert, TablesUpdate
 
 ## File grandi (non leggere interi: Grep o Read con offset/limit)

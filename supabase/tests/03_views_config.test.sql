@@ -50,7 +50,7 @@ select has_column('public', 'piazza_public'::name, 'handle'::name, 'piazza_publi
 -- ---- Lettura anonima ----
 select set_config('request.jwt.claims', '{"role":"anon"}', true);
 set local role anon;
-select is((select count(*)::integer from public.platform_config), 47, 'anon legge tutta la config (47 chiavi)');
+select is((select count(*)::integer from public.platform_config), 49, 'anon legge tutta la config (49 chiavi)');
 select is((select value from public.platform_config where key = 'problem_support_threshold'), '25'::jsonb, 'soglia sostegni = 25');
 select is((select count(*)::integer from public.problems_public), 1, 'anon legge problems_public');
 select is((select count(*)::integer from public.proposals_public), 2, 'anon legge proposals_public');

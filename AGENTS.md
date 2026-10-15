@@ -69,6 +69,7 @@ Le aree `src/`, `supabase/`, `engine/` hanno il proprio `AGENTS.md` (creato dall
 | `pnpm test` | Vitest app (`src/`, `scripts/`) + `engine` |
 | `pnpm --filter engine test` | solo test del motore |
 | `pnpm build` | build Next.js |
+| `pnpm e2e` | Playwright (solo nel job CI `e2e`, non in locale) |
 | `pnpm ai:map` / `pnpm ai:check` | rigenera / verifica `.ai/mappa-codice.md` (hook PostToolUse la rigenera da solo) |
 | `pnpm check:changed` | typecheck+lint+test solo dei pacchetti toccati rispetto a main |
 DB: niente Docker locale. Test SQL/RLS girano solo nel job CI `db` (`supabase start` + `db reset` + `test db`); app su progetto Supabase dev remoto. Supabase CLI via `pnpm dlx supabase@2.120.0` (stessa versione della CI). TypeScript fermo a 6.x finché typescript-eslint non supporta TS 7.
