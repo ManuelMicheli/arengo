@@ -7,8 +7,12 @@ export const metadata: Metadata = { title: "Account · Arengo" };
 
 export default async function AccountPage() {
   const supabase = await createUserClient();
+  // getUser verifica il token sul server di Auth: un account appena eliminato non passa.
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
   const { data: status } = await supabase.rpc("my_onboarding_status");
-  if (status === "anonymous") redirect("/login");
 
   return (
     <main className="mx-auto flex max-w-2xl flex-col gap-6 p-4">
