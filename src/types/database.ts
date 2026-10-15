@@ -781,14 +781,29 @@ isOneToOne: false
 "cast_vote":
 { Args: { "item_id": string,"item_type": string,"value": number }; Returns: undefined
                            },
+"complete_onboarding":
+{ Args: { "adult": boolean,"consent_art9": boolean,"handle": string,"rules_version": string,"user_id": string }; Returns: undefined
+                           },
+"delete_account":
+{ Args: { "user_id": string }; Returns: undefined
+                           },
+"export_my_data":
+{ Args: Record<PropertyKey, never>; Returns: Json
+                           },
 "is_admin":
 { Args: Record<PropertyKey, never>; Returns: boolean
+                           },
+"my_onboarding_status":
+{ Args: Record<PropertyKey, never>; Returns: string
                            },
 "my_vote":
 { Args: { "item_id": string,"item_type": string }; Returns: number
                            },
 "my_writing_pause":
 { Args: Record<PropertyKey, never>; Returns: string
+                           },
+"pseudo_secret_is_test":
+{ Args: Record<PropertyKey, never>; Returns: boolean
                            },
 "rate_argument":
 { Args: { "argument_id": string,"useful": boolean }; Returns: undefined
@@ -798,6 +813,9 @@ isOneToOne: false
                            },
 "support_problem":
 { Args: { "problem_id": string }; Returns: undefined
+                           },
+"suspend_user":
+{ Args: { "until": string,"user_id": string }; Returns: undefined
                            }
           }
           Enums: {
